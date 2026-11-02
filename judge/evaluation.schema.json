@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:rag-presentation:1.0",
+  "title": "Compact RAG presentation record with full gold evidence and judging",
+  "$comment": "Input sources use rag-benchmark/1.0. Presentation exports omit raw API payloads, reasoning and repeated retrieved/context text; all metrics and gold evidence remain.",
+  "type": "object",
+  "required": [
+    "question_category",
+    "gold_answer",
+    "gold_evidence",
+    "judge",
+    "judge_details",
+    "judge_provenance",
+    "answers",
+    "schema_version",
+    "source_schema_version",
+    "method",
+    "question_id",
+    "question",
+    "as_of",
+    "status",
+    "metrics",
+    "retrieval",
+    "context",
+    "gold_details"
+  ],
+  "properties": {
+    "question_category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gold_answer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gold_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "document_id",
+          "passage"
+        ]
+      }
+    },
+    "judge": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/scores"
+        }
+      ]
+    },
+    "judge_details": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/details"
+        }
+      ]
+    },
+    "judge_provenance": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "gold_file",
+        "gold_sha256",
+        "input_record_sha256",
+        "score_scope"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "rag-judge/1.0"
+        }
+      }
+    },
+    "answers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "judge",
+          "judge_details"
+        ],
+        "properties": {
+          "judge": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/scores"
+              }
+            ]
+          },
+          "judge_details": {
+            "$ref": "#/$defs/details"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "judge_details": {
+                  "properties": {
+                    "status": {
+                      "const": "completed"
+                    }
+                  }
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "judge": {
+                  "$ref": "#/$defs/scores"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "judge": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "api_calls"
+                  ]
+                },
+                {
+                  "required": [
+                    "message"
+                  ]
+                },
+                {
+                  "required": [
+                    "trace"
+                  ]
+                },
+                {
+                  "required": [
+                    "agent_state"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "schema_version": {
+      "const": "rag-presentation/1.0"
+    },
+    "source_schema_version": {
+      "const": "rag-benchmark/1.0"
+    },
+    "gold_details": {
+      "type": "object"
+    },
+    "metrics": {
+      "type": "object"
+    },
+    "retrieval": {
+      "type": "object",
+      "required": [
+        "chunks",
+        "metrics"
+      ],
+      "properties": {
+        "chunks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "not": {
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "not": {
+        "required": [
+          "text"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "answer_correctness",
+        "context_relevance",
+        "faithfulness",
+        "answer_relevance"
+      ],
+      "properties": {
+        "answer_correctness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "context_relevance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "faithfulness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "answer_relevance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "details": {
+      "type": "object",
+      "required": [
+        "status",
+        "task_fingerprint"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "skipped",
+            "completed",
+            "error"
+          ]
+        },
+        "task_fingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "completed"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "schema_version",
+              "model_requested",
+              "temperature",
+              "reasoning",
+              "metrics",
+              "explanations",
+              "evaluated_at",
+              "error"
+            ],
+            "properties": {
+              "error": {
+                "type": "null"
+              },
+              "explanations": {
+                "type": "object",
+                "required": [
+                  "answer_correctness",
+                  "context_relevance",
+                  "faithfulness",
+                  "answer_relevance"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "request"
+                ]
+              },
+              {
+                "required": [
+                  "response"
+                ]
+              },
+              {
+                "required": [
+                  "api_calls"
+                ]
+              },
+              {
+                "required": [
+                  "batch_result"
+                ]
+              },
+              {
+                "required": [
+                  "batch_metadata"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

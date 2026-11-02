@@ -1,0 +1,59 @@
+# Local credentials; retain the credential-free configuration example.
+.env
+.env.*
+!.env.example
+
+# Python environments, bytecode and downloaded toolchains/caches.
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.cache/
+.cargo/
+.rustup/
+.pytest_cache/
+
+# Downloaded SEC data: commit only the small reference questions and data guide.
+/data/*
+!/data/README.md
+!/data/questions.jsonl
+*.parquet
+
+# Rebuildable retrieval databases and complete local generation/audit records.
+/lume/*/db/
+/lume/*/q-a.jsonl
+*.log
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+
+# Downloaded native dependency sources, built binaries and build outputs.
+/lume/*/src/bin/
+/lume/*/src/native/vendor/
+target/
+node_modules/
+build/
+dist/
+_site/
+
+# Judge operational artifacts; compact final-results JSONL remains tracked.
+/judge/*.audit.jsonl
+/judge/*.state.json
+/judge/*.lock
+/judge/validation/*.audit.jsonl
+/judge/validation/*.state.json
+/judge/validation/*.lock
+
+# Editor / OS local files.
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Generated website data is rebuilt from compact exports on every build.
+/website/public/data/
+/website/coverage/
+/website/test-results/
+*.tsbuildinfo

@@ -1,0 +1,557 @@
+{
+  "created_at": "2026-11-02T22:43:06.967671+00:00",
+  "model_requested": "anthropic/claude-sonnet-5.5",
+  "mode": "concurrent",
+  "source_access": "Read-only snapshots; active writers were not locked or interrupted.",
+  "sources": [
+    {
+      "method": "bm25",
+      "records_in_snapshot": 50,
+      "successful_answers_in_snapshot": 50,
+      "source_bytes": 8109012,
+      "source_snapshot_sha256": "b55e96653706a2a7efe09e1fa82f135e0a735035099ae90b291d2d06bbf39278",
+      "sample_question_id": "q001",
+      "sample_answer_model": "google/gemini-3.8-flash",
+      "sample_answer_context_used": "context"
+    },
+    {
+      "method": "agentic-search",
+      "records_in_snapshot": 10,
+      "successful_answers_in_snapshot": 9,
+      "source_bytes": 4155171,
+      "source_snapshot_sha256": "8375b807e84ae79fd532bf3a2f1d4d8367c4d83929a9125b9237b1ff77c6eead",
+      "sample_question_id": "q001",
+      "sample_answer_model": "google/gemini-3.8-flash",
+      "sample_answer_context_used": "answers[model].context"
+    }
+  ],
+  "status": "passed",
+  "scope": "Schema/compaction plus four controlled calibration cases and two real completed answers; not an accuracy benchmark.",
+  "results": [
+    {
+      "scenario": "actual_bm25",
+      "question_id": "q001",
+      "candidate_answer": "According to Alphabet Inc.’s Consolidated Statements of Income in its 2024 Form 10-K, Alphabet’s revenue for 2024 was **$350,018 million** (or approximately **$350.02 billion**) [2], [6].",
+      "gold_answer": "$350.018 billion",
+      "judge": {
+        "answer_correctness": 1,
+        "context_relevance": 0.8,
+        "faithfulness": 1,
+        "answer_relevance": 1
+      },
+      "judge_details": {
+        "schema_version": "rag-judge/1.0",
+        "task_fingerprint": "028679099a80cefcabb6664fa4a72a96936c0c8b7a26dbfd76d2b948ee43ead0",
+        "status": "completed",
+        "evaluated_at": "2026-11-02T22:43:03.279469+00:00",
+        "model_requested": "anthropic/claude-sonnet-5.5",
+        "model_returned": "anthropic/claude-sonnet-5.5",
+        "provider": "Azure",
+        "generation_id": "gen-1793659378-aenUUy7isXkOh44IpSUB",
+        "gateway": "llmfoundry",
+        "router": "openrouter",
+        "temperature": 0,
+        "reasoning": {
+          "effort": "low"
+        },
+        "batch_id": null,
+        "batch_usage": null,
+        "batch_cost_scope": null,
+        "metrics": {
+          "api_cost_usd": 0.03883,
+          "input_tokens": 17890,
+          "output_tokens": 305,
+          "reasoning_tokens": 0,
+          "cost_complete": true,
+          "usage_complete": true,
+          "llm_api_calls": 1,
+          "http_time_ms": 53448.032508000324,
+          "time_to_first_token_ms": null
+        },
+        "explanations": {
+          "answer_correctness": "The candidate states $350,018 million (~$350.02 billion), matching the gold answer of $350.018 billion for 2024 revenue.",
+          "context_relevance": "Chunk [2] contains the income statement with 2024 revenues of $350018, and [6] shows total revenues of $350018 in the segment table. Several other chunks are irrelevant, such as the audit report, the cash flow statement, EPS, and constant currency tables, but the key evidence is present.",
+          "faithfulness": "The $350,018 million figure is supported by the Consolidated Statements of Income in [2] and by the segment table in [6]. The citations are accurate.",
+          "answer_relevance": "The answer directly states Alphabet's 2024 revenue, as the question asked."
+        },
+        "error": null,
+        "usage": {
+          "prompt_tokens": 17890,
+          "completion_tokens": 305,
+          "total_tokens": 18195,
+          "cost": 0.03883,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 0.03883,
+            "upstream_inference_prompt_cost": 0.03578,
+            "upstream_inference_completions_cost": 0.00305
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        },
+        "finish_reason": "stop"
+      },
+      "calibration_checks": []
+    },
+    {
+      "scenario": "actual_agentic-search",
+      "question_id": "q001",
+      "candidate_answer": "According to Alphabet Inc.’s Form 10-K for the fiscal year ended December 31, 2024 (filed February 5, 2025), Alphabet’s total revenue for 2024 was **$350,018 million** (or approximately **$350.02 billion**), representing a 14% increase from $307,394 million in 2023 [1], [11].\n\n---\n\n### **Revenue Breakdown by Segment and Activity**\n\n| Revenue Source | 2024 Revenue (in millions) |\n|:---|---:|\n| **Google Services** | **$304,930** [13] |\n| — *Google Search & other* | $198,084 [13] |\n| — *YouTube ads* | $36,147 [13] |\n| — *Google Network* | $30,359 [13] |\n| **Total Google advertising** | *$264,590* [13] |\n| — *Google subscriptions, platforms, and devices* | $40,340 [13] |\n| **Google Cloud** | **$43,229** [13] |\n| **Other Bets** | **$1,648** [13] |\n| **Hedging gains (losses)** | **$211** [13] |\n| **Total Revenues** | **$350,018** [1], [13] |",
+      "gold_answer": "$350.018 billion",
+      "judge": {
+        "answer_correctness": 1,
+        "context_relevance": 0.9,
+        "faithfulness": 0.95,
+        "answer_relevance": 0.95
+      },
+      "judge_details": {
+        "schema_version": "rag-judge/1.0",
+        "task_fingerprint": "cb35f403934b1a89fa3691bdd168c178bff17a052d807b5b383bbf707540f5d0",
+        "status": "completed",
+        "evaluated_at": "2026-11-02T22:43:03.291924+00:00",
+        "model_requested": "anthropic/claude-sonnet-5.5",
+        "model_returned": "anthropic/claude-sonnet-5.5",
+        "provider": "Azure",
+        "generation_id": "gen-1793659378-hVHeBeMIGhOpQWeE2egU",
+        "gateway": "llmfoundry",
+        "router": "openrouter",
+        "temperature": 0,
+        "reasoning": {
+          "effort": "low"
+        },
+        "batch_id": null,
+        "batch_usage": null,
+        "batch_cost_scope": null,
+        "metrics": {
+          "api_cost_usd": 0.057044,
+          "input_tokens": 26787,
+          "output_tokens": 347,
+          "reasoning_tokens": 0,
+          "cost_complete": true,
+          "usage_complete": true,
+          "llm_api_calls": 1,
+          "http_time_ms": 53447.80479700057,
+          "time_to_first_token_ms": null
+        },
+        "explanations": {
+          "answer_correctness": "Candidate states 2024 revenue of $350,018 million (~$350.02B), matching gold $350.018 billion. Extra segment breakdown figures also match the filing.",
+          "context_relevance": "Context includes the consolidated income statement [1], segment table [6], and revenue-by-type table [13], plus the executive overview [11], all directly supporting the answer. Some chunks (cash flow, tax, fair value) are irrelevant noise.",
+          "faithfulness": "All figures are supported: $350,018M and 14% growth from $307,394M [11], and the breakdown in [13]. Minor issue: the citation [1] for the revenue total is fine, and the filing date is supported by the context header. Nothing contradicted.",
+          "answer_relevance": "Directly answers the revenue question up front; the segment breakdown table is extra but relevant and non-distracting."
+        },
+        "error": null,
+        "usage": {
+          "prompt_tokens": 26787,
+          "completion_tokens": 347,
+          "total_tokens": 27134,
+          "cost": 0.057044,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 0.057044,
+            "upstream_inference_prompt_cost": 0.053574,
+            "upstream_inference_completions_cost": 0.00347
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        },
+        "finish_reason": "stop"
+      },
+      "calibration_checks": []
+    },
+    {
+      "scenario": "control_correct_supported",
+      "question_id": "q001",
+      "candidate_answer": "$350.018 billion [1].",
+      "gold_answer": "$350.018 billion",
+      "judge": {
+        "answer_correctness": 1,
+        "context_relevance": 1,
+        "faithfulness": 1,
+        "answer_relevance": 1
+      },
+      "judge_details": {
+        "schema_version": "rag-judge/1.0",
+        "task_fingerprint": "02d8549763517074d8ced32ade4c1a4be202b2a354cb45d5b942352f2aaf4222",
+        "status": "completed",
+        "evaluated_at": "2026-11-02T22:43:02.260606+00:00",
+        "model_requested": "anthropic/claude-sonnet-5.5",
+        "model_returned": "anthropic/claude-sonnet-5.5",
+        "provider": "Azure",
+        "generation_id": "gen-1793659378-z7Ezu6fCunNbih0a09GJ",
+        "gateway": "llmfoundry",
+        "router": "openrouter",
+        "temperature": 0,
+        "reasoning": {
+          "effort": "low"
+        },
+        "batch_id": null,
+        "batch_usage": null,
+        "batch_cost_scope": null,
+        "metrics": {
+          "api_cost_usd": 0.008306,
+          "input_tokens": 2913,
+          "output_tokens": 248,
+          "reasoning_tokens": 0,
+          "cost_complete": true,
+          "usage_complete": true,
+          "llm_api_calls": 1,
+          "http_time_ms": 52428.49220200151,
+          "time_to_first_token_ms": null
+        },
+        "explanations": {
+          "answer_correctness": "Candidate states $350.018 billion, matching the gold answer and the 2024 revenue of $350018 million in evidence 0001652044-25-000014.",
+          "context_relevance": "The single context [1] is the consolidated income statement showing 2024 Revenues of $350018 million, which is focused and sufficient.",
+          "faithfulness": "The $350.018 billion figure is directly supported by the context [1] (in millions, $350018), and the citation marker [1] is valid.",
+          "answer_relevance": "Directly and completely answers the question about Alphabet's 2024 revenue."
+        },
+        "error": null,
+        "usage": {
+          "prompt_tokens": 2913,
+          "completion_tokens": 248,
+          "total_tokens": 3161,
+          "cost": 0.008306,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 0.008306,
+            "upstream_inference_prompt_cost": 0.005826,
+            "upstream_inference_completions_cost": 0.00248
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        },
+        "finish_reason": "stop"
+      },
+      "calibration_checks": [
+        {
+          "metric": "answer_correctness",
+          "operation": ">=",
+          "threshold": 0.9,
+          "observed": 1,
+          "passed": true
+        },
+        {
+          "metric": "faithfulness",
+          "operation": ">=",
+          "threshold": 0.9,
+          "observed": 1,
+          "passed": true
+        },
+        {
+          "metric": "context_relevance",
+          "operation": ">=",
+          "threshold": 0.9,
+          "observed": 1,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": "control_wrong_contradicted",
+      "question_id": "q001",
+      "candidate_answer": "Alphabet revenue in 2024 was $1 trillion [1].",
+      "gold_answer": "$350.018 billion",
+      "judge": {
+        "answer_correctness": 0,
+        "context_relevance": 1,
+        "faithfulness": 0,
+        "answer_relevance": 0.8
+      },
+      "judge_details": {
+        "schema_version": "rag-judge/1.0",
+        "task_fingerprint": "61482c1a6053cc2f8be22efdd84d2f28f91f026bd4ec78e5553d79fb2927cbde",
+        "status": "completed",
+        "evaluated_at": "2026-11-02T22:43:05.954876+00:00",
+        "model_requested": "anthropic/claude-sonnet-5.5",
+        "model_returned": "anthropic/claude-sonnet-5.5",
+        "provider": "Azure",
+        "generation_id": "gen-1793659383-aKWMyYFLJHkw0bSd4mUz",
+        "gateway": "llmfoundry",
+        "router": "openrouter",
+        "temperature": 0,
+        "reasoning": {
+          "effort": "low"
+        },
+        "batch_id": null,
+        "batch_usage": null,
+        "batch_cost_scope": null,
+        "metrics": {
+          "api_cost_usd": 0.008152,
+          "input_tokens": 2926,
+          "output_tokens": 230,
+          "reasoning_tokens": 0,
+          "cost_complete": true,
+          "usage_complete": true,
+          "llm_api_calls": 1,
+          "http_time_ms": 3694.206504998874,
+          "time_to_first_token_ms": null
+        },
+        "explanations": {
+          "answer_correctness": "Candidate says $1 trillion; gold is $350.018 billion (350,018 million). Materially wrong.",
+          "context_relevance": "Context [1] is the income statement showing 2024 revenues of $350,018 million; focused and sufficient.",
+          "faithfulness": "The $1 trillion claim is contradicted by context [1], which shows $350,018 million, so the cited support is false.",
+          "answer_relevance": "Directly addresses the question about Alphabet's 2024 revenue, though the figure is wrong."
+        },
+        "error": null,
+        "usage": {
+          "prompt_tokens": 2926,
+          "completion_tokens": 230,
+          "total_tokens": 3156,
+          "cost": 0.008152,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 0.008152,
+            "upstream_inference_prompt_cost": 0.005852,
+            "upstream_inference_completions_cost": 0.0023
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        },
+        "finish_reason": "stop"
+      },
+      "calibration_checks": [
+        {
+          "metric": "answer_correctness",
+          "operation": "<=",
+          "threshold": 0.2,
+          "observed": 0,
+          "passed": true
+        },
+        {
+          "metric": "faithfulness",
+          "operation": "<=",
+          "threshold": 0.2,
+          "observed": 0,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": "control_correct_without_context",
+      "question_id": "q001",
+      "candidate_answer": "$350.018 billion.",
+      "gold_answer": "$350.018 billion",
+      "judge": {
+        "answer_correctness": 1,
+        "context_relevance": 0,
+        "faithfulness": 0,
+        "answer_relevance": 1
+      },
+      "judge_details": {
+        "schema_version": "rag-judge/1.0",
+        "task_fingerprint": "5006b447a37779942e0f423fb00d896c76a5b8259aad366095cbc66e896dd457",
+        "status": "completed",
+        "evaluated_at": "2026-11-02T22:43:06.964301+00:00",
+        "model_requested": "anthropic/claude-sonnet-5.5",
+        "model_returned": "anthropic/claude-sonnet-5.5",
+        "provider": "Azure",
+        "generation_id": "gen-1793659384-FkmCLL0XYMjEq3OcYHEc",
+        "gateway": "llmfoundry",
+        "router": "openrouter",
+        "temperature": 0,
+        "reasoning": {
+          "effort": "low"
+        },
+        "batch_id": null,
+        "batch_usage": null,
+        "batch_cost_scope": null,
+        "metrics": {
+          "api_cost_usd": 0.007178,
+          "input_tokens": 2299,
+          "output_tokens": 258,
+          "reasoning_tokens": 0,
+          "cost_complete": true,
+          "usage_complete": true,
+          "llm_api_calls": 1,
+          "http_time_ms": 3684.4419929984724,
+          "time_to_first_token_ms": null
+        },
+        "explanations": {
+          "answer_correctness": "Candidate's $350.018 billion matches the gold answer and gold evidence (Revenues 2024 $350,018 million).",
+          "context_relevance": "The only context chunk [1] is about an unrelated company's office equipment and contains no Alphabet figures, so it is irrelevant and insufficient.",
+          "faithfulness": "The $350.018 billion claim is not supported by the supplied context, which has no Alphabet financials. The answer neither cites a marker nor states insufficiency.",
+          "answer_relevance": "The answer directly states Alphabet's 2024 revenue, which is exactly what was asked."
+        },
+        "error": null,
+        "usage": {
+          "prompt_tokens": 2299,
+          "completion_tokens": 258,
+          "total_tokens": 2557,
+          "cost": 0.007178,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 0.007178,
+            "upstream_inference_prompt_cost": 0.004598,
+            "upstream_inference_completions_cost": 0.00258
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        },
+        "finish_reason": "stop"
+      },
+      "calibration_checks": [
+        {
+          "metric": "answer_correctness",
+          "operation": ">=",
+          "threshold": 0.9,
+          "observed": 1,
+          "passed": true
+        },
+        {
+          "metric": "faithfulness",
+          "operation": "<=",
+          "threshold": 0.2,
+          "observed": 0,
+          "passed": true
+        },
+        {
+          "metric": "context_relevance",
+          "operation": "<=",
+          "threshold": 0.2,
+          "observed": 0,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "scenario": "control_justified_abstention",
+      "question_id": "q001",
+      "candidate_answer": "The supplied passage does not provide Alphabet’s 2024 revenue, so I cannot determine it from this context.",
+      "gold_answer": "$350.018 billion",
+      "judge": {
+        "answer_correctness": 0.0,
+        "context_relevance": 0.0,
+        "faithfulness": 1.0,
+        "answer_relevance": 0.2
+      },
+      "judge_details": {
+        "schema_version": "rag-judge/1.0",
+        "task_fingerprint": "5e357d0d36a5979908091ba2550f6569b4cb8b9c7e75d02a2716581dd550421a",
+        "status": "completed",
+        "evaluated_at": "2026-11-02T22:43:06.965990+00:00",
+        "model_requested": "anthropic/claude-sonnet-5.5",
+        "model_returned": "anthropic/claude-sonnet-5.5",
+        "provider": "Azure",
+        "generation_id": "gen-1793659384-GPpErhNtov5VPPzyFxKd",
+        "gateway": "llmfoundry",
+        "router": "openrouter",
+        "temperature": 0,
+        "reasoning": {
+          "effort": "low"
+        },
+        "batch_id": null,
+        "batch_usage": null,
+        "batch_cost_scope": null,
+        "metrics": {
+          "api_cost_usd": 0.007446,
+          "input_tokens": 2328,
+          "output_tokens": 279,
+          "reasoning_tokens": 0,
+          "cost_complete": true,
+          "usage_complete": true,
+          "llm_api_calls": 1,
+          "http_time_ms": 3681.8505869996443,
+          "time_to_first_token_ms": null
+        },
+        "explanations": {
+          "answer_correctness": "Gold answer is $350.018 billion (gold evidence 0001652044-25-000014). The candidate gave no revenue figure and abstained, so it is substantively incorrect.",
+          "context_relevance": "The only context chunk [1] is an unrelated company's office equipment description with no Alphabet financial data. It is irrelevant and insufficient.",
+          "faithfulness": "The candidate states the passage lacks Alphabet's 2024 revenue, which matches the context [1]. This is a justified insufficiency statement.",
+          "answer_relevance": "The candidate addresses the question only by declining to answer. It gives no requested information, so relevance is low."
+        },
+        "error": null,
+        "usage": {
+          "prompt_tokens": 2328,
+          "completion_tokens": 279,
+          "total_tokens": 2607,
+          "cost": 0.007446,
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+          },
+          "cost_details": {
+            "upstream_inference_cost": 0.007446,
+            "upstream_inference_prompt_cost": 0.004656,
+            "upstream_inference_completions_cost": 0.00279
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0,
+            "image_tokens": 0,
+            "audio_tokens": 0
+          }
+        },
+        "finish_reason": "stop"
+      },
+      "calibration_checks": [
+        {
+          "metric": "answer_correctness",
+          "operation": "<=",
+          "threshold": 0.2,
+          "observed": 0.0,
+          "passed": true
+        },
+        {
+          "metric": "faithfulness",
+          "operation": ">=",
+          "threshold": 0.8,
+          "observed": 1.0,
+          "passed": true
+        },
+        {
+          "metric": "context_relevance",
+          "operation": "<=",
+          "threshold": 0.2,
+          "observed": 0.0,
+          "passed": true
+        }
+      ]
+    }
+  ]
+}

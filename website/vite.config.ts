@@ -1,0 +1,2 @@
+import {defineConfig} from 'vite';import react from '@vitejs/plugin-react';import {benchmarkDataPlugin} from './scripts/watch-data.mjs';
+export default defineConfig({base:('/'+(process.env.PAGES_BASE_PATH??'').replace(/^\/+|\/+$/g,'')+'/').replace(/\/+/g,'/'),plugins:[react(),benchmarkDataPlugin()],build:{chunkSizeWarningLimit:1200,rollupOptions:{output:{manualChunks:{plotly:['plotly.js-basic-dist-min']}}}}});

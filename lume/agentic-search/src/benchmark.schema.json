@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:rag-benchmark:1.0",
+  "title": "Method-independent RAG benchmark question record",
+  "type": "object",
+  "required": ["schema_version", "method", "run_id", "question_id", "question", "as_of", "status", "configuration_hash", "requested_models", "retrieval", "context", "answers", "metrics", "errors", "trace", "provenance"],
+  "properties": {
+    "schema_version": {"const": "rag-benchmark/1.0"},
+    "method": {"type": "string", "description": "bm25, hybrid, graph, agentic, dense, hierarchical, or another method name"},
+    "run_id": {"type": "string"},
+    "question_id": {"type": "string"},
+    "question": {"type": "string"},
+    "as_of": {"type": "string"},
+    "status": {"enum": ["pending", "completed", "partial", "truncated", "error"]},
+    "requested_models": {"type": "array", "items": {"type": "string"}},
+    "retrieval": {
+      "type": "object", "required": ["queries", "chunks", "metrics"],
+      "properties": {
+        "queries": {"type": "array", "items": {"type": "object", "required": ["query_id", "text", "filters", "stage"]}},
+        "chunks": {"type": "array", "items": {"$ref": "#/$defs/chunk"}},
+        "metrics": {"type": "object"}
+      }
+    },
+    "context": {
+      "type": "object", "required": ["text", "chunk_ids", "citation_map"],
+      "properties": {"text": {"type": "string"}, "chunk_ids": {"type": "array", "items": {"type": "string"}}, "citation_map": {"type": "object"}}
+    },
+    "answers": {"type": "object", "additionalProperties": {"$ref": "#/$defs/answer"}},
+    "metrics": {"$ref": "#/$defs/metrics"},
+    "errors": {"type": "array"},
+    "trace": {"type": "array"},
+    "provenance": {"type": "object"}
+  },
+  "allOf": [{
+    "if": {"properties": {"status": {"enum": ["completed", "partial", "truncated", "error"]}}},
+    "then": {"properties": {"metrics": {"required": ["total_time_seconds", "retrieval_time_ms", "llm_generation_time_ms", "api_cost_usd", "input_tokens", "output_tokens", "llm_api_calls", "tool_calls", "db_queries", "documents_retrieved"]}}}
+  }],
+  "$defs": {
+    "chunk": {
+      "type": "object", "required": ["chunk_id", "document_id", "rank", "text", "scores", "source", "metadata"],
+      "properties": {
+        "chunk_id": {"type": "string"}, "document_id": {"type": "string"},
+        "rank": {"type": "integer", "minimum": 1}, "text": {"type": "string"},
+        "scores": {"type": "object", "description": "Named retrieval scores, for example bm25, dense, graph or reranker"},
+        "source": {"type": "object", "required": ["hash", "start_char", "end_char", "section"]}
+      }
+    },
+    "answer": {
+      "type": "object", "required": ["model_requested", "model_returned", "provider", "final_answer", "status", "api_calls", "metrics", "errors"],
+      "properties": {
+        "model_requested": {"type": "string"}, "model_returned": {"type": ["string", "null"]},
+        "provider": {"type": ["string", "null"]}, "final_answer": {"type": ["string", "null"]},
+        "api_calls": {"type": "array", "items": {"$ref": "#/$defs/api_call"}},
+        "attempt_history": {"type": "array", "items": {"$ref": "#/$defs/answer"}},
+        "metrics": {"$ref": "#/$defs/metrics"}, "errors": {"type": "array"}
+      }
+    },
+    "api_call": {
+      "type": "object", "required": ["call_id", "kind", "stage", "model_requested", "attempt", "request", "http_status", "response", "raw_response", "response_headers", "started_at", "ended_at", "latency_ms", "error"],
+      "properties": {
+        "kind": {"enum": ["generation", "metadata"]}, "stage": {"type": "string"},
+        "request": {"type": "object"}, "response": {"type": ["object", "null"]},
+        "raw_response": {"type": ["string", "null"]}, "response_headers": {"type": "object"}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "total_time_seconds": {"type": ["number", "null"]},
+        "retrieval_time_ms": {"type": ["number", "null"]},
+        "llm_generation_time_ms": {"type": ["number", "null"]},
+        "api_cost_usd": {"type": ["number", "null"]},
+        "input_tokens": {"type": ["integer", "null"]},
+        "output_tokens": {"type": ["integer", "null"]},
+        "llm_api_calls": {"type": ["integer", "null"]},
+        "tool_calls": {"type": ["integer", "null"]},
+        "db_queries": {"type": ["integer", "null"]},
+        "documents_retrieved": {"type": ["integer", "null"]}
+      }
+    }
+  }
+}

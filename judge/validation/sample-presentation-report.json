@@ -1,0 +1,24 @@
+{
+  "checks": [
+    {
+      "method": "bm25",
+      "question_id": "q001",
+      "output_file": "judge/validation/presentation-lume-bm25.jsonl",
+      "output_bytes": 20728,
+      "live_response_reused_without_new_api_calls": true,
+      "json_schema_gold_metrics_checks": "passed",
+      "resume_new_calls": 0,
+      "judge_status": "completed"
+    },
+    {
+      "method": "agentic-search",
+      "question_id": "q001",
+      "output_file": "judge/validation/presentation-lume-agentic-search.jsonl",
+      "output_bytes": 51088,
+      "live_response_reused_without_new_api_calls": true,
+      "json_schema_gold_metrics_checks": "passed",
+      "resume_new_calls": 0,
+      "judge_status": "completed"
+    }
+  ]
+}

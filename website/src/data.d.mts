@@ -1,0 +1,14 @@
+import type {Evaluation,Filters,Group} from './types';
+export const scoreKeys:string[];
+export const labels:Record<string,string>;
+export function readable(s:unknown):string;
+export function numeric(v:unknown):number|null;
+export function mean(xs:(number|null|undefined)[]):number|null;
+export function median(xs:(number|null|undefined)[]):number|null;
+export function initialFilters():Filters;
+export function parseFilters(search:string):Filters;
+export function filtersQuery(f:Filters):URLSearchParams;
+export function filterRows(rows:Evaluation[],f:Filters):Evaluation[];
+export function groupRows(rows:Evaluation[]):Group[];
+export function matchedComparison(groups:Group[]):{n:number;groups:Group[];reason:string|null};
+export function csv<T>(rows:T[],columns:{label:string;value:(r:T)=>unknown}[]):string;

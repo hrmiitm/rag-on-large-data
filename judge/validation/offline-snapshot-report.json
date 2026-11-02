@@ -1,0 +1,30 @@
+{
+  "source_checks": [
+    {
+      "method": "bm25",
+      "records_in_snapshot": 50,
+      "successful_answers_in_snapshot": 50,
+      "source_bytes": 8109012,
+      "source_snapshot_sha256": "b55e96653706a2a7efe09e1fa82f135e0a735035099ae90b291d2d06bbf39278",
+      "projected_export_bytes": 1010930,
+      "offline_checks": "All snapshot records pass JSON schemas/roundtrip, full gold evidence, metric preservation and per-model context checks.",
+      "sample_question_id": "q001",
+      "sample_answer_model": "google/gemini-3.8-flash",
+      "sample_answer_context_used": "context"
+    },
+    {
+      "method": "agentic-search",
+      "records_in_snapshot": 17,
+      "successful_answers_in_snapshot": 16,
+      "source_bytes": 9037507,
+      "source_snapshot_sha256": "b3ca24970b43eed415c4e3a836dab909a308ce238cb5120ea21ed70c4bd401e4",
+      "projected_export_bytes": 792351,
+      "offline_checks": "All snapshot records pass JSON schemas/roundtrip, full gold evidence, metric preservation and per-model context checks.",
+      "sample_question_id": "q001",
+      "sample_answer_model": "google/gemini-3.8-flash",
+      "sample_answer_context_used": "answers[model].context"
+    }
+  ],
+  "sample_tasks": 6,
+  "api_calls": 0
+}

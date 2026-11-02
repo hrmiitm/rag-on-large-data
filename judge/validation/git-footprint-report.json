@@ -1,0 +1,58 @@
+{
+  "ignore_rule_examples_passed": 22,
+  "git_initialized": false,
+  "candidate_file_count": 41,
+  "candidate_total_bytes": 1675670,
+  "files_over_10_MB": [],
+  "largest_files": [
+    {
+      "path": "judge/final-results/q-a-eval-lume-bm25.jsonl",
+      "bytes": 1012730
+    },
+    {
+      "path": "data/questions.jsonl",
+      "bytes": 207953
+    },
+    {
+      "path": "judge/validation/presentation-lume-agentic-search.jsonl",
+      "bytes": 51088
+    },
+    {
+      "path": "lume/agentic-search/src/eval.py",
+      "bytes": 50851
+    },
+    {
+      "path": "lume/bm25/src/eval.py",
+      "bytes": 40167
+    },
+    {
+      "path": "judge/eval.py",
+      "bytes": 33926
+    },
+    {
+      "path": "lume/bm25/src/native/Cargo.lock",
+      "bytes": 23830
+    },
+    {
+      "path": "lume/agentic-search/src/native/Cargo.lock",
+      "bytes": 23830
+    },
+    {
+      "path": "judge/validation/sample-concurrent-report.json",
+      "bytes": 21727
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 20942
+    },
+    {
+      "path": "judge/validation/presentation-lume-bm25.jsonl",
+      "bytes": 20728
+    },
+    {
+      "path": "judge/test_eval.py",
+      "bytes": 20133
+    }
+  ],
+  "relocation_ignore_rule_examples_passed": 11
+}

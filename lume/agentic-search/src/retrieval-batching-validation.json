@@ -1,0 +1,30 @@
+{
+  "checked_at": "2026-11-02T23:22:59.269386+00:00",
+  "questions": 10,
+  "question_ids": [
+    "q001",
+    "q002",
+    "q004",
+    "q007",
+    "q010",
+    "q012",
+    "q013",
+    "q014",
+    "q016",
+    "q020"
+  ],
+  "k": 5,
+  "native_process_concurrency": 1,
+  "memory_limit_mb": 2048,
+  "ten_separate_passes_ms": 78278.84545100096,
+  "one_ten_query_pass_ms": 8015.379753000161,
+  "retrieval_speedup": 9.766080692770814,
+  "batch_peak_rss_mb": 802.36328125,
+  "single_peak_rss_mb": 807.69140625,
+  "exact_chunk_ids_ranks_scores_equal": true,
+  "date_cutoffs_passed": true,
+  "logical_db_operation_counts_equal": true,
+  "production_outputs_unchanged": true,
+  "llm_api_calls": 0,
+  "scope": "Local retrieval equivalence/timing only; not a new full live answer run or guaranteed end-to-end speedup."
+}
