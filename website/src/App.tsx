@@ -95,8 +95,8 @@ export default function App(){
            <details className="disclosure"><summary>Detailed results and matched comparisons</summary><Leaderboard rows={filtered} hover={hover} setHover={setHover} onOpen={openGroup}/></details>
            <p className="explore-link"><button onClick={()=>navigate('questions')}>Browse all questions <ArrowRight size={16}/></button></p>
          </>}
-         {page==='questions'&&<Explorer rows={filtered} hover={hover} setHover={setHover} onInspect={r=>setInspect(r.id)}/>}
-         {page==='judge'&&<><JudgeCharts rows={filtered} dark={dark}/><Explorer rows={filtered} judge hover={hover} setHover={setHover} onInspect={r=>setInspect(r.id)}/></>}
+         {page==='questions'&&<Explorer rows={filtered} hover={hover} setHover={setHover} onInspect={r=>setInspect(r.id)} manifest={manifest}/>}
+         {page==='judge'&&<><JudgeCharts rows={filtered} dark={dark}/><Explorer rows={filtered} judge hover={hover} setHover={setHover} onInspect={r=>setInspect(r.id)} manifest={manifest}/></>}
          {page==='methodology'&&<Methodology manifest={manifest} rows={rows} questions={questions}/>}
          {page!=='overview'&&page!=='methodology'&&<p className="table-note">{filtered.length} evaluations · {complete} judged · {pending} pending</p>}
          <footer className="page-footer"><span>SEC Financial RAG benchmark</span><span>Data updated {new Date(manifest.publishedAt).toLocaleString()}</span></footer>
