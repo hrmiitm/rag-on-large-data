@@ -42,6 +42,9 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
   setHover:(value:Hover)=>void;onOpen:(group:Group)=>void;
 }) {
   const [showMore,setShowMore]=useState(false);
+  const [rowOrder,setRowOrder]=useState('default');
+  const [columnMetric,setColumnMetric]=useState('default');
+  const [direction,setDirection]=useState('asc');
   const settings=useMemo(()=>{
     const grouped=new Map<string,{key:string;label:string;groups:Group[]}>();
     for(const group of groupRows(rows)) {
@@ -53,9 +56,31 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
     }
     return [...grouped.values()].sort((a,b)=>a.label.localeCompare(b.label));
   },[rows]);
-  const visibleMetrics=showMore?[...metrics,...extraMetrics]:metrics;
+  const visibleMetrics=[...(showMore?[...metrics,...extraMetrics]:metrics)];
+  if(rowOrder!=='default')visibleMetrics.sort((a,b)=>(rowOrder==='asc'?1:-1)*a.label.localeCompare(b.label));
+  const orderedMethods=(groups:Group[])=>{
+    if(columnMetric==='default')return methods;
+    const metric=[...metrics,...extraMetrics].find(m=>m.key===columnMetric);
+    const value=(method:string)=>{
+      const matches=groups.filter(g=>g.method===method);
+      return matches.length===1&&metric?metric.value(matches[0]):null;
+    };
+    return [...methods].sort((a,b)=>{
+      if(columnMetric==='name')return (direction==='asc'?1:-1)*a.localeCompare(b);
+      const av=value(a),bv=value(b);
+      if(av===null)return bv===null?0:1;
+      if(bv===null)return -1;
+      return (direction==='asc'?1:-1)*(av-bv);
+    });
+  };
   return <section className="results-summary" aria-labelledby="results-title">
     <div className="results-heading"><h2 id="results-title">Results at a glance</h2><button aria-expanded={showMore} onClick={()=>setShowMore(!showMore)}>{showMore?'Fewer metrics':'More metrics'}</button></div>
+    <div className="matrix-controls">
+      <label>Metric rows <select value={rowOrder} onChange={e=>setRowOrder(e.target.value)}><option value="default">Default order</option><option value="asc">Name A–Z</option><option value="desc">Name Z–A</option></select></label>
+      <label>Strategy columns <select value={columnMetric} onChange={e=>setColumnMetric(e.target.value)}><option value="default">Default order</option><option value="name">Strategy name</option>{[...metrics,...extraMetrics].map(m=><option key={m.key} value={m.key}>{m.label}</option>)}</select></label>
+      <label>Column direction <select value={direction} disabled={columnMetric==='default'} onChange={e=>setDirection(e.target.value)}><option value="asc">Ascending</option><option value="desc">Descending</option></select></label>
+      <button disabled={rowOrder==='default'&&columnMetric==='default'} onClick={()=>{setRowOrder('default');setColumnMetric('default');setDirection('asc');}}>Reset order</button>
+    </div>
     {settings.map(setting=><div className="matrix-setting" key={setting.key}>
       <h3 className="matrix-setting-title" title={setting.groups[0].model}>{setting.label}
         {settings.filter(s=>s.label===setting.label).length>1&&<small>Corpus {setting.groups[0].rows[0].corpusHash?.slice(0,8)??'N/A'} · output limit {setting.groups[0].rows[0].maxOutput??'N/A'}</small>}
@@ -63,13 +88,13 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
       <div className="matrix-scroll">
         <table className="comparison-matrix">
           <caption className="sr-only">Benchmark metrics by retrieval strategy for {setting.label}.</caption>
-          <thead><tr><th scope="col">Metric</th>{methods.map(method=><th scope="col" key={method}>
+          <thead><tr><th scope="col">Metric</th>{orderedMethods(setting.groups).map(method=><th scope="col" key={method}>
             <span className="method-name"><i style={{background:color(method)}}/>{method}</span>
           </th>)}</tr></thead>
           <tbody>
             {visibleMetrics.map(metric=><tr key={metric.key}>
               <th scope="row">{metric.label}</th>
-              {methods.map(method=>{
+              {orderedMethods(setting.groups).map(method=>{
                 const groups=setting.groups.filter(g=>g.method===method);
                 return <td key={method} className={hover?.method&&hover.method!==method?'faded':''}>
                   {groups.length?groups.map(g=><button key={g.key} className="matrix-result"
@@ -82,7 +107,7 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
                 </td>;
               })}
             </tr>)}
-            <tr><th scope="row">Judged answers</th>{methods.map(method=>{
+            <tr><th scope="row">Judged answers</th>{orderedMethods(setting.groups).map(method=>{
               const groups=setting.groups.filter(g=>g.method===method);
               return <td key={method} className={hover?.method&&hover.method!==method?'faded':''}>{groups.length?groups.map(g=><button key={g.key} className="matrix-result" aria-label={`Inspect judged answers for ${method}, ${setting.label}, configuration ${g.configuration.slice(0,8)}`} title={`Completed judgments / recorded evaluations\n${g.model}\nConfiguration ${g.configuration}`} onMouseEnter={()=>setHover({method})} onMouseLeave={()=>setHover(null)} onClick={()=>onOpen(g)}><span>{g.judged} / {g.n}</span>{groups.length>1&&<small>Config {g.configuration.slice(0,8)}</small>}</button>):<span className="unavailable">N/A</span>}</td>;
             })}</tr>
@@ -91,6 +116,6 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
       </div>
     </div>)}
     {!settings.length&&<p className="empty">No results for this selection.</p>}
-    <p className="table-note">Averages use the selected answers. Hover for sample counts; select a value to inspect its questions.</p>
+    <p className="table-note">Averages use the selected answers. Hover for sample counts; select a value to inspect its questions. Column sorting uses each table’s values; unavailable or multiple-configuration values stay last. Judged coverage stays at the bottom.</p>
   </section>;
 }

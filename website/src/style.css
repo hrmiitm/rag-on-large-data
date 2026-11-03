@@ -843,3 +843,13 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 }
 
 
+
+/* Keep row labels visible while comparing wide strategy tables. */
+.matrix-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 0 0 16px; }
+.matrix-controls label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--muted); }
+.matrix-controls select { max-width: 100%; min-height: 36px; }
+.comparison-matrix tr > :first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); border-right: 1px solid var(--line); }
+.comparison-matrix tbody tr:nth-child(even) > :first-child { background: var(--surface-alt); }
+.comparison-matrix tbody tr:hover > * { background: var(--hover); }
+.table-scroll th[aria-sort="ascending"] button, .table-scroll th[aria-sort="descending"] button { color: var(--text); font-weight: 700; }
+@media(max-width:600px) { .matrix-controls label { flex: 1 1 145px; } }

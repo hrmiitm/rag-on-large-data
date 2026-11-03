@@ -74,3 +74,26 @@ it('reveals additional recorded metrics on demand and does not add reasoning tok
   await userEvent.click(screen.getByRole('button',{name:'Fewer metrics'}));
   expect(screen.queryByRole('rowheader',{name:'Avg. reasoning tokens'})).toBeNull();
 });
+
+it('orders metric rows and strategy columns independently, with missing values last in either direction',async()=>{
+  mount([row('expensive','q1',{cost:.5}),row('missing','q1',{cost:null}),row('cheap','q1',{cost:.01})]);
+  await userEvent.selectOptions(screen.getByLabelText('Metric rows'),'asc');
+  const labels=screen.getAllByRole('rowheader').map(c=>c.textContent!);
+  expect(labels.slice(0,-1)).toEqual([...labels.slice(0,-1)].sort((a,b)=>a.localeCompare(b)));
+  expect(labels.at(-1)).toBe('Judged answers');
+  await userEvent.selectOptions(screen.getByLabelText('Strategy columns'),'cost');
+  expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','cheap','expensive','missing']);
+  expect(values('Avg. API cost')).toEqual(['$0.0100','$0.5000','N/A']);
+  await userEvent.selectOptions(screen.getByLabelText('Column direction'),'desc');
+  expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','expensive','cheap','missing']);
+  await userEvent.click(screen.getByRole('button',{name:'Reset order'}));
+  expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','expensive','missing','cheap']);
+  expect(screen.getAllByRole('rowheader')[0].textContent).toBe('Answer correctness');
+});
+it('never pools multiple configurations to rank a strategy',async()=>{
+  mount([row('multi','q1',{cost:.01}),row('multi','q2',{configuration:'b'.repeat(64),cost:.03}),row('single','q1',{cost:.5})]);
+  await userEvent.selectOptions(screen.getByLabelText('Strategy columns'),'cost');
+  expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','single','multi']);
+  expect(values('Avg. API cost')[1]).toContain('$0.0100');
+  expect(values('Avg. API cost')[1]).toContain('$0.0300');
+});

@@ -78,3 +78,5 @@ For a root/custom-domain deployment, use `/`. This follows [Vite's GitHub Pages 
 ## Verification limits
 
 See [VALIDATION.md](VALIDATION.md). DOM tests verify filters, chart event wiring, tables, detail loading and themes, and separate adapter tests verify Plotly options/exports. They do not replace a real-browser visual, touch-device or accessibility audit. Browser access was disabled in the workspace Work settings during implementation; no screenshot/visual or mobile-browser verification is claimed.
+
+Table ordering: use **Metric rows** to order metric names and **Strategy columns** to order methods by name or a recorded metric, with ascending/descending direction and a reset button. Metric sorting is independent for each model/settings table. Missing values and strategies with multiple configurations stay last; configurations are never pooled for sorting. Coverage remains the last row. Row labels remain visible during horizontal scrolling. Question/detail tables support header sorting, Shift-click multi-column sorting, and **Reset sorting**; active sort direction is exposed to assistive technology.
