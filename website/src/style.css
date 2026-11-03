@@ -853,3 +853,23 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .comparison-matrix tbody tr:hover > * { background: var(--hover); }
 .table-scroll th[aria-sort="ascending"] button, .table-scroll th[aria-sort="descending"] button { color: var(--text); font-weight: 700; }
 @media(max-width:600px) { .matrix-controls label { flex: 1 1 145px; } }
+
+/* Small controls within the existing category matrix; keep its cells and grouping. */
+.category-breakdown-table .category-sort { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; width: 22px; height: 24px; padding: 2px; margin-left: 3px; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
+.category-breakdown-table .category-sort:hover, .category-breakdown-table .category-sort[aria-pressed="true"] { color: var(--accent); background: var(--hover); }
+.category-label-actions { position: relative; display: block; }
+.category-preview-anchor { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.category-preview-anchor .q-count-badge { font-family: inherit; line-height: inherit; text-align: left; cursor: pointer; }
+.category-question-preview { position: fixed; z-index: 1000; width: min(400px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); box-shadow: 0 10px 30px #0002; font-size: 14px; }
+.category-preview-heading { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.category-preview-heading button { border: 0; background: transparent; padding: 2px 8px; color: var(--muted); font-size: 20px; }
+.category-preview-list { max-height: 210px; overflow-y: auto; overscroll-behavior: contain; padding: 0 14px; }
+.category-preview-list ol { list-style: none; padding: 0; margin: 0; }
+.category-preview-list li { min-height: 70px; box-sizing: border-box; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.category-preview-list li:last-child { border-bottom: 0; }
+.category-preview-list .mono { font-size: 12px; color: var(--muted); }
+.category-preview-list p { margin: 4px 0 0; line-height: 1.5; }
+.category-breakdown-table .th-col-quality, .category-breakdown-table .th-col-metrics { position: relative; }
+.category-header-controls { position: absolute; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-around; }
+.category-header-controls .category-sort { width: 16px; height: 22px; margin: 0; padding: 1px; }
+.category-label-actions > .category-sort { position: absolute; right: -14px; top: 0; }

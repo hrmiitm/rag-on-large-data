@@ -1,5 +1,6 @@
-import {Fragment,useMemo} from 'react';
-import {ArrowUpRight,Clock,DollarSign,FileCode2,Sparkles,Trophy} from 'lucide-react';
+import {Fragment,useMemo,useState} from 'react';
+import CategoryQuestionPreview from './CategoryQuestionPreview';
+import {ArrowUpRight,Clock,DollarSign,FileCode2,Sparkles,Trophy,ArrowDownUp} from 'lucide-react';
 import {mean,readable} from './data.mjs';
 import {color,money,percent,seconds} from './format';
 import type {Evaluation,Manifest,Question} from './types';
@@ -19,6 +20,16 @@ export default function CategoryBreakdownTable({
   questions:Question[];
   onSelectCategory:(cat:string)=>void;
 }){
+  type Metric='correctness'|'faithfulness'|'cost'|'latency';
+  const [rowSort,setRowSort]=useState<{key:string;method?:string;metric?:Metric;desc:boolean}|null>(null);
+  const [columnSort,setColumnSort]=useState<{category:string;desc:boolean}|null>(null);
+  const toggleRows=(key:string,method?:string,metric?:Metric)=>setRowSort(old=>old?.key===key?(old.desc?null:{key,method,metric,desc:true}):{key,method,metric,desc:false});
+  const toggleColumns=(category:string)=>setColumnSort(old=>old?.category===category?(old.desc?null:{category,desc:true}):{category,desc:false});
+  const compare=(a:number|string|null,b:number|string|null,desc:boolean)=>{
+    if(a===null)return b===null?0:1;if(b===null)return -1;
+    return (desc?-1:1)*(typeof a==='number'&&typeof b==='number'?a-b:String(a).localeCompare(String(b),undefined,{numeric:true}));
+  };
+  const sortButton=(key:string,label:string,method?:string,metric?:Metric)=><button className="category-sort" aria-label={label} title={label+'; tap to sort, reverse, then reset'} aria-pressed={rowSort?.key===key} onClick={()=>toggleRows(key,method,metric)}>{rowSort?.key===key?<span aria-hidden="true">{rowSort.desc?'↓':'↑'}</span>:<ArrowDownUp size={12}/>}</button>;
   const methodFileMap=useMemo(()=>{
     const map=new Map<string,string>();
     if(manifest?.sources){
@@ -93,6 +104,13 @@ export default function CategoryBreakdownTable({
     });
   },[categories,methods,rows,questions]);
 
+  const displayedStats=rowSort?[...categoryStats].sort((a,b)=>{
+    const value=(s:typeof a)=>rowSort.method&&rowSort.metric?s.byMethod[rowSort.method]?.[rowSort.metric]??null:rowSort.key==='count'?s.qCount:rowSort.key==='leader'?s.leaderText:readable(s.category);
+    return compare(value(a),value(b),rowSort.desc);
+  }):categoryStats;
+  const selectedCategory=columnSort?categoryStats.find(s=>s.category===columnSort.category):null;
+  const displayedMethods=selectedCategory&&columnSort?[...methods].sort((a,b)=>compare(selectedCategory.byMethod[a]?.correctness??null,selectedCategory.byMethod[b]?.correctness??null,columnSort.desc)):methods;
+
   return <section className="category-breakdown-section" aria-labelledby="category-breakdown-title">
     <div className="section-title-wrap">
       <div className="section-heading-content">
@@ -106,41 +124,43 @@ export default function CategoryBreakdownTable({
       <table className="category-breakdown-table">
         <thead>
           <tr className="matrix-header-super">
-            <th className="th-cat" rowSpan={2}>Question Category</th>
-            {methods.map(m=><th key={m} colSpan={2} className="th-strategy-group">
+            <th className="th-cat" rowSpan={2}>Question Category{sortButton('category','Sort categories by name')}{sortButton('count','Sort categories by question count')}</th>
+            {displayedMethods.map(m=><th key={m} colSpan={2} className="th-strategy-group">
               <div className="strategy-header-box">
                 <span className="file-pill mono" title={`Source file: ${getMethodFile(m)}`}>
                   <FileCode2 size={12}/> {getMethodFile(m)}
                 </span>
                 <div className="strategy-title">
                   <i style={{background:color(m)}}/>
-                  <strong>{m}</strong>
+                  <strong>{m}</strong>{sortButton(m+':correctness','Sort categories by '+m+' overall correctness',m,'correctness')}
                 </div>
               </div>
             </th>)}
-            {methods.length>=2&&<th className="th-leader" rowSpan={2}>Category Leader</th>}
+            {methods.length>=2&&<th className="th-leader" rowSpan={2}>Category Leader{sortButton('leader','Sort categories by leader')}</th>}
             <th className="th-action" rowSpan={2}>Explore</th>
           </tr>
           <tr className="matrix-header-sub">
-            {methods.map(m=><Fragment key={m}>
-              <th className="th-col-quality">Quality (Correctness & Faithfulness)</th>
-              <th className="th-col-metrics">Cost & Time Taken (Latency)</th>
+            {displayedMethods.map(m=><Fragment key={m}>
+              <th className="th-col-quality">Quality (Correctness & Faithfulness)<span className="category-header-controls">{sortButton(m+':correctness','Sort categories by '+m+' correctness',m,'correctness')}{sortButton(m+':faithfulness','Sort categories by '+m+' faithfulness',m,'faithfulness')}</span></th>
+              <th className="th-col-metrics">Cost & Time Taken (Latency)<span className="category-header-controls">{sortButton(m+':cost','Sort categories by '+m+' cost',m,'cost')}{sortButton(m+':latency','Sort categories by '+m+' latency',m,'latency')}</span></th>
             </Fragment>)}
           </tr>
         </thead>
         <tbody>
-          {categoryStats.map(stat=><tr key={stat.category} className="matrix-row">
+          {displayedStats.map(stat=><tr key={stat.category} className="matrix-row">
             <td className="td-category-info">
               <div className="category-cell-wrap">
-                <div className="inline">
-                  <strong className="category-name">{readable(stat.category)}</strong>
-                  <span className="q-count-badge">{stat.qCount} questions</span>
+                <div className="category-label-actions">
+                  <CategoryQuestionPreview name={readable(stat.category)} count={stat.qCount} questions={questions.filter(q=>q.category===stat.category).length?questions.filter(q=>q.category===stat.category):[...new Map(rows.filter(r=>r.category===stat.category).map(r=>[r.questionId,{id:r.questionId,question:r.question,category:r.category,asOf:r.asOf}])).values()]}>
+                    <strong className="category-name">{readable(stat.category)}</strong>
+                  </CategoryQuestionPreview>
+                  <button className="category-sort" aria-label={`Sort strategies by correctness in ${readable(stat.category)}`} title="Sort strategy columns by correctness in this category; tap to reverse, then reset" aria-pressed={columnSort?.category===stat.category} onClick={()=>toggleColumns(stat.category)}><span aria-hidden="true">{columnSort?.category===stat.category?(columnSort.desc?'←':'→'):'↔'}</span></button>
                 </div>
                 <p className="category-desc">{stat.description}</p>
               </div>
             </td>
 
-            {methods.map(m=>{
+            {displayedMethods.map(m=>{
               const s=stat.byMethod[m];
               if(!s||!s.total){
                 return <Fragment key={m}>
