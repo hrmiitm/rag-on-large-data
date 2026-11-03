@@ -1,6 +1,6 @@
 import {useCallback,useEffect,useMemo,useState} from 'react';
 import {ArrowRight,Search,Share2,X} from 'lucide-react';
-import Charts from './Charts';import ComparisonMatrix from './ComparisonMatrix';import {Leaderboard,JudgeCharts,Methodology} from './Analytics';import {Explorer,QuestionDetail} from './Explorer';import {filterRows,filtersQuery,groupRows,initialFilters,matchedComparison,mean,parseFilters,readable} from './data.mjs';import {color,money,num,percent,seconds,shortModel} from './format';import type {Evaluation,Filters,Group,Hover,Manifest,Question} from './types';
+import Charts from './Charts';import ComparisonMatrix from './ComparisonMatrix';import CategoryBreakdownTable from './CategoryBreakdownTable';import {Leaderboard,JudgeCharts,Methodology} from './Analytics';import {Explorer,QuestionDetail} from './Explorer';import {filterRows,filtersQuery,groupRows,initialFilters,matchedComparison,mean,parseFilters,readable} from './data.mjs';import {color,money,num,percent,seconds,shortModel} from './format';import type {Evaluation,Filters,Group,Hover,Manifest,Question} from './types';
 const pages=[{id:'overview',label:'Overview'},{id:'questions',label:'Question explorer'},{id:'judge',label:'Judge analysis'},{id:'methodology',label:'Methodology'}];
 const toggle=(xs:string[],x:string)=>xs.includes(x)?xs.filter(s=>s!==x):[...xs,x];
 export default function App(){
@@ -86,6 +86,7 @@ export default function App(){
          </>}
          {page==='overview'&&<>
            <ComparisonMatrix rows={filtered} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} hover={hover} setHover={setHover} onOpen={openGroup}/>
+           <CategoryBreakdownTable rows={rows} categories={manifest.categories} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} manifest={manifest} questions={questions} onSelectCategory={(cat)=>{setFilters(f=>({...f,categories:[cat]}));navigate('questions');}}/>
            {pending>0&&complete===0&&<p className="pending-note">Judgments are pending for {pending} answers. Measured costs and response times are available.</p>}
            <Charts rows={filtered} categories={manifest.categories.filter(c=>!filters.categories.length||filters.categories.includes(c))} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} dark={dark} hover={hover} setHover={setHover} setFilters={setFilters} openEvaluations={openGroup}/>
            <details className="disclosure"><summary>Summary statistics and findings</summary>
