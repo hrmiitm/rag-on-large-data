@@ -853,14 +853,3 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .comparison-matrix tbody tr:hover > * { background: var(--hover); }
 .table-scroll th[aria-sort="ascending"] button, .table-scroll th[aria-sort="descending"] button { color: var(--text); font-weight: 700; }
 @media(max-width:600px) { .matrix-controls label { flex: 1 1 145px; } }
-
-.axis-sort { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; border: 0; background: transparent; color: inherit; font: inherit; text-align: inherit; padding: 4px 0; touch-action: manipulation; }
-.axis-sort:hover { color: var(--accent); background: transparent; }
-.sort-icon::after { content: '↕'; color: var(--muted); }
-.sort-icon[data-direction="asc"]::after { content: '↑'; color: var(--accent); }
-.sort-icon[data-direction="desc"]::after { content: '↓'; color: var(--accent); }
-.sort-icon[data-direction="horizontal"]::after { content: '↔'; }
-.row-axis-sort { min-width: 44px; min-height: 44px; margin-right: 8px; touch-action: manipulation; }
-.row-axis-sort[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
-.table-scroll th button { min-height: 44px; width: 100%; touch-action: manipulation; }
-.axis-sort:focus-visible, .row-axis-sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

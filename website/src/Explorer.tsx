@@ -5,33 +5,194 @@ import Table from './Table';import {Panel} from './Charts';import {labels,numeri
 export const Status=({status}:{status:string})=><span className={`status status-${status}`}><i/>{status==='missing'?'Not Evaluated':readable(status)}</span>;
 
 export function QuestionMatrix({rows,manifest,onInspect}:{rows:Evaluation[];manifest?:Manifest|null;onInspect:(r:Evaluation)=>void}){
-  const methods=(manifest?.methods??[...new Set(rows.map(r=>r.method))]).filter(m=>rows.some(r=>r.method===m));
+  const [pageIndex,setPageIndex]=useState(0);
+  const pageSize=10;
+
+  const methods=useMemo(()=>{
+    if(manifest?.methods?.length){
+      return manifest.methods.filter(m=>rows.some(r=>r.method===m));
+    }
+    return [...new Set(rows.map(r=>r.method))];
+  },[rows,manifest]);
+
+  const methodFileMap=useMemo(()=>{
+    const map=new Map<string,string>();
+    if(manifest?.sources){
+      for(const s of manifest.sources){
+        map.set(s.method,s.file);
+      }
+    }
+    return map;
+  },[manifest]);
+
+  const getMethodFile=(m:string)=>methodFileMap.get(m)??`q-a-eval-${m}.jsonl`;
+
   const questions=useMemo(()=>{
-    const map=new Map<string,{id:string;question:string;evaluations:Record<string,Evaluation[]>}>();
+    const map=new Map<string,{id:string;question:string;category:string;asOf:string;evaluations:Record<string,Evaluation>}>();
     for(const r of rows){
-      if(!map.has(r.questionId))map.set(r.questionId,{id:r.questionId,question:r.question,evaluations:{}});
-      (map.get(r.questionId)!.evaluations[r.method]??=[]).push(r);
+      if(!map.has(r.questionId)){
+        map.set(r.questionId,{id:r.questionId,question:r.question,category:r.category,asOf:r.asOf,evaluations:{}});
+      }
+      map.get(r.questionId)!.evaluations[r.method]=r;
     }
     return [...map.values()].sort((a,b)=>a.id.localeCompare(b.id));
   },[rows]);
-  type QuestionRow=typeof questions[number];
-  // Keep every model/configuration as its own sortable series.
-  const series=[...new Map(rows.map(r=>[JSON.stringify([r.method,r.model,r.configuration,r.reasoning,r.maxOutput,r.corpusHash,r.questionHash]),r])).values()];
-  const columns:any[]=[{accessorKey:'id',header:'Reference Question',cell:({row}:any)=><div className="question-info"><strong>{row.original.id}</strong><p className="q-text">{row.original.question}</p></div>},
-    ...series.flatMap(sample=>{
-      const multi=series.filter(s=>s.method===sample.method).length>1;
-      const name=sample.method+(multi?` · ${shortModel(sample.model)} · ${sample.configuration.slice(0,8)} · ${String(sample.reasoning??'N/A')} · max ${sample.maxOutput??'N/A'} · corpus ${sample.corpusHash?.slice(0,8)??'N/A'} · questions ${sample.questionHash?.slice(0,8)??'N/A'}`:'');
-      const get=(q:QuestionRow)=>q.evaluations[sample.method]?.find(r=>r.model===sample.model&&r.configuration===sample.configuration&&r.reasoning===sample.reasoning&&r.maxOutput===sample.maxOutput&&r.corpusHash===sample.corpusHash&&r.questionHash===sample.questionHash);
-      return [
-        {key:'correctness',label:'Correctness',value:(e:Evaluation)=>e.judgeStatus==='completed'?e.scores.answer_correctness:null,format:percent},
-        {key:'faithfulness',label:'Faithfulness',value:(e:Evaluation)=>e.judgeStatus==='completed'?e.scores.faithfulness:null,format:percent},
-        {key:'cost',label:'API cost',value:(e:Evaluation)=>e.cost,format:money},
-        {key:'latency',label:'Latency',value:(e:Evaluation)=>e.latency,format:seconds},
-      ].map(metric=>({id:JSON.stringify([name,metric.key]),header:`${name} · ${metric.label}`,accessorFn:(q:QuestionRow)=>{const e=get(q);return e?metric.value(e):null;},cell:({getValue,row}:any)=><button className="matrix-result" disabled={!get(row.original)} onClick={(event)=>{event.stopPropagation();const e=get(row.original);if(e)onInspect(e);}}>{metric.format(getValue())}</button>}));
-    })];
+
+  const totalPages=Math.max(1,Math.ceil(questions.length/pageSize));
+  const currentQuestions=useMemo(()=>questions.slice(pageIndex*pageSize,(pageIndex+1)*pageSize),[questions,pageIndex,pageSize]);
+
+  const getAdvantage=(evals:Record<string,Evaluation>)=>{
+    if(methods.length<2)return null;
+    const m1=evals[methods[0]],m2=evals[methods[1]];
+    if(!m1||!m2)return null;
+    let speedText='';
+    const lat1=m1.latency,lat2=m2.latency;
+    if(lat1!==null&&lat2!==null&&lat1>0&&lat2>0){
+      if(lat1<lat2){
+        const ratio=(lat2/lat1).toFixed(1);
+        speedText=`${methods[0]} ${ratio}x faster`;
+      }else if(lat2<lat1){
+        const ratio=(lat1/lat2).toFixed(1);
+        speedText=`${methods[1]} ${ratio}x faster`;
+      }else{
+        speedText='Tied latency';
+      }
+    }
+    const cost1=m1.cost,cost2=m2.cost;
+    let costText='';
+    if(cost1!==null&&cost2!==null&&cost1>0&&cost2>0){
+      if(cost1<cost2){
+        costText=`${methods[0]} cheaper`;
+      }else if(cost2<cost1){
+        costText=`${methods[1]} cheaper`;
+      }
+    }
+    const c1=m1.scores.answer_correctness,c2=m2.scores.answer_correctness;
+    let scoreText='';
+    if(c1!==null&&c2!==null){
+      if(c1>c2){
+        scoreText=`${methods[0]} +${Math.round((c1-c2)*100)}%`;
+      }else if(c2>c1){
+        scoreText=`${methods[1]} +${Math.round((c2-c1)*100)}%`;
+      }else{
+        scoreText=`Tied (${percent(c1)})`;
+      }
+    }
+    return {speedText,costText,scoreText};
+  };
+
+  if(!questions.length){
+    return <div className="empty">No questions match these filters.</div>;
+  }
+
   return <div className="question-matrix-container" id="per-question-matrix">
-    <p className="table-note">{questions.length} questions · {methods.length} strategies. Tap any column header to sort all questions before pagination. Tap a value to inspect that exact answer.</p>
-    <Table data={questions} columns={columns} filename="question-comparison" controls={false} paginationLabel="question"/>
+    <div className="matrix-toolbar">
+      <div className="matrix-meta">
+        <strong>{questions.length} Questions</strong>
+        <span className="subtle">Comparing {methods.length} retrieval strategies side-by-side</span>
+      </div>
+      <div className="pagination">
+        <span>Page {pageIndex+1} of {totalPages}</span>
+        <div className="inline">
+          <button aria-label="Previous question page" disabled={pageIndex===0} onClick={()=>setPageIndex(p=>Math.max(0,p-1))}>
+            <ChevronLeft size={15}/>
+          </button>
+          <button aria-label="Next question page" disabled={pageIndex>=totalPages-1} onClick={()=>setPageIndex(p=>Math.min(totalPages-1,p+1))}>
+            <ChevronRight size={15}/>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div className="matrix-scroll">
+      <table className="question-matrix-table">
+        <thead>
+          <tr className="matrix-header-super">
+            <th className="th-q" rowSpan={2}>Reference Question</th>
+            {methods.map(m=><th key={m} colSpan={2} className="th-strategy-group">
+              <div className="strategy-header-box">
+                <span className="file-pill mono" title={`Source file: ${getMethodFile(m)}`}>
+                  <FileCode2 size={12}/> {getMethodFile(m)}
+                </span>
+                <div className="strategy-title">
+                  <i style={{background:color(m)}}/>
+                  <strong>{m}</strong>
+                </div>
+              </div>
+            </th>)}
+            {methods.length>=2&&<th className="th-adv" rowSpan={2}>Comparison & Advantage</th>}
+            <th className="th-act" rowSpan={2}>Action</th>
+          </tr>
+          <tr className="matrix-header-sub">
+            {methods.map(m=><Fragment key={m}>
+              <th className="th-col-quality">Quality (Correctness & Faithfulness)</th>
+              <th className="th-col-metrics">Cost & Time Taken (Latency)</th>
+            </Fragment>)}
+          </tr>
+        </thead>
+        <tbody>
+          {currentQuestions.map(q=>{
+            const evals=q.evaluations;
+            const advantage=getAdvantage(evals);
+            const firstEval=Object.values(evals)[0];
+            return <tr key={q.id} className="matrix-row" aria-label={`Side-by-side comparison for ${q.id}`}>
+              <td className="td-question">
+                <div className="question-info">
+                  <div className="inline">
+                    <span className="mono q-badge">{q.id}</span>
+                    <span className="category-pill">{readable(q.category)}</span>
+                  </div>
+                  <p className="q-text" title={q.question}>{q.question}</p>
+                  {q.asOf&&<small className="subtle">As of {q.asOf}</small>}
+                </div>
+              </td>
+              {methods.map(m=>{
+                const e=evals[m];
+                if(!e){
+                  return <Fragment key={m}>
+                    <td className="td-quality td-empty"><span className="unavailable">N/A</span></td>
+                    <td className="td-metrics td-empty"><span className="unavailable">N/A</span></td>
+                  </Fragment>;
+                }
+                const corr=e.scores.answer_correctness,faith=e.scores.faithfulness;
+                const isPending=e.judgeStatus==='pending',isMissing=e.judgeStatus==='missing',isError=e.judgeStatus==='error';
+                return <Fragment key={m}>
+                  <td className="td-quality">
+                    <div className="quality-cell-content">
+                      {corr!==null?<span className={`score-badge ${corr>=0.8?'score-high':corr>=0.5?'score-mid':'score-low'}`}>{percent(corr)} Correct</span>:isPending?<span className="score-badge score-pending">Pending</span>:isError?<span className="score-badge score-error">Error</span>:<span className="score-badge score-missing">Not Evaluated</span>}
+                      {faith!==null&&<span className="sub-stat">Faith: <b>{percent(faith)}</b></span>}
+                    </div>
+                  </td>
+                  <td className="td-metrics">
+                    <div className="metrics-cell-content">
+                      <div className="metric-pill latency-pill" title={`Latency: ${seconds(e.latency)}`}>
+                        <Clock size={12}/>
+                        <span>{seconds(e.latency)}</span>
+                      </div>
+                      <div className="metric-pill cost-pill" title={`Serving cost: ${money(e.cost)}`}>
+                        <DollarSign size={12}/>
+                        <span>{money(e.cost)}</span>
+                      </div>
+                    </div>
+                  </td>
+                </Fragment>;
+              })}
+              {methods.length>=2&&<td className="td-advantage">
+                {advantage?<div className="advantage-box">
+                  {advantage.speedText&&<span className="adv-pill speed-adv">⚡ {advantage.speedText}</span>}
+                  {advantage.scoreText&&<span className="adv-pill score-adv">🎯 {advantage.scoreText}</span>}
+                  {advantage.costText&&<span className="adv-pill cost-adv">💰 {advantage.costText}</span>}
+                </div>:<span className="unavailable">—</span>}
+              </td>}
+              <td className="td-action">
+                {firstEval&&<button className="inspect-btn" onClick={()=>onInspect(firstEval)} aria-label={`Open question lab for ${q.id}`} title={`Inspect question ${q.id} answers and evidence`}>
+                  Inspect <ArrowUpRight size={13}/>
+                </button>}
+              </td>
+            </tr>;
+          })}
+        </tbody>
+      </table>
+    </div>
   </div>;
 }
 
@@ -49,7 +210,7 @@ export function Explorer({rows,onInspect,judge=false,manifest}:{rows:Evaluation[
      <a href="#all-evaluations-table" className="quick-nav-pill"><Layers size={14}/> All Evaluation Records (Sorting & CSV Export)</a>
    </div>
 
-   <Panel title="Per-Question Strategy Comparison" sub="Side-by-side comparison across JSONL files. Correctness, faithfulness, cost and latency each have a tappable sortable column. Models and configurations stay separate.">
+   <Panel title="Per-Question Strategy Comparison" sub="Side-by-side comparison across JSONL files. Quality (correctness & faithfulness) and Cost & Time Taken (latency) organized by strategy columns.">
      <QuestionMatrix rows={rows} manifest={manifest} onInspect={onInspect}/>
    </Panel>
 

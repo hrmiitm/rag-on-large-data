@@ -57,7 +57,7 @@ it('separates models and retains multiple configuration values instead of averag
   expect(screen.getAllByRole('table').length).toBe(2);
   const table=screen.getAllByRole('table').find(t=>t.getAttribute('aria-label')?.includes('gemini')||t.textContent?.includes('Config bbbbbbbb'))!;
   const correctness=within(table).getByRole('row',{name:/^Answer correctness/});
-  expect(within(correctness).getAllByRole('button',{name:/^Inspect /}).length).toBe(2);
+  expect(within(correctness).getAllByRole('button').length).toBe(2);
   expect(correctness.textContent).toContain('80.0%');
   expect(correctness.textContent).toContain('40.0%');
   expect(correctness.textContent).not.toContain('60.0%');
@@ -93,34 +93,7 @@ it('orders metric rows and strategy columns independently, with missing values l
 it('never pools multiple configurations to rank a strategy',async()=>{
   mount([row('multi','q1',{cost:.01}),row('multi','q2',{configuration:'b'.repeat(64),cost:.03}),row('single','q1',{cost:.5})]);
   await userEvent.selectOptions(screen.getByLabelText('Strategy columns'),'cost');
-  expect(screen.getAllByRole('columnheader').map(c=>within(c).getAllByRole('button')[0].textContent)).toEqual(['Metric','single','multi']);
+  expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','single','multi']);
   expect(values('Avg. API cost')[1]).toContain('$0.0100');
   expect(values('Avg. API cost')[1]).toContain('$0.0300');
-});
-
-it('every metric row and strategy header sorts directly by tap, reversing and resetting on repeated taps',async()=>{
-  mount([row('costly','q1',{cost:.5}),row('cheap','q1',{cost:.01})]);
-  const columns=()=>screen.getAllByRole('columnheader').map(c=>c.textContent);
-  await userEvent.click(screen.getByRole('button',{name:'Sort strategy columns by Avg. API cost'}));
-  expect(columns()).toEqual(['Metric','cheap','costly']);
-  await userEvent.click(screen.getByRole('button',{name:'Sort strategy columns by Avg. API cost'}));
-  expect(columns()).toEqual(['Metric','costly','cheap']);
-  await userEvent.click(screen.getByRole('button',{name:'Sort strategy columns by Avg. API cost'}));
-  expect(screen.getByLabelText('Strategy columns')).toHaveProperty('value','default');
-  await userEvent.click(screen.getByRole('button',{name:'More metrics'}));
-  for(const header of screen.getAllByRole('rowheader'))expect(within(header).getByRole('button')).toBeTruthy();
-  const sort=screen.getByRole('button',{name:'Sort metric rows by cheap'});
-  await userEvent.click(sort);
-  expect(screen.getAllByRole('rowheader')[0].textContent).toBe('Avg. API cost');
-  await userEvent.click(sort);
-  expect(screen.getAllByRole('rowheader')[0].textContent).toBe('Avg. generation time (ms)');
-  await userEvent.click(sort);
-  expect(screen.getAllByRole('rowheader')[0].textContent).toBe('Answer correctness');
-});
-
-it('each configuration header can sort metric rows without mixing configuration values',async()=>{
-  mount([row('multi','q1',{cost:.01}),row('multi','q2',{configuration:'b'.repeat(64),cost:10000})]);
-  await userEvent.click(screen.getByRole('button',{name:'Sort metric rows by multi configuration bbbbbbbb'}));
-  await userEvent.click(screen.getByRole('button',{name:'Sort metric rows by multi configuration bbbbbbbb'}));
-  expect(screen.getAllByRole('rowheader')[0].textContent).toBe('Avg. API cost');
 });
