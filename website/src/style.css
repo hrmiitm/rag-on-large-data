@@ -845,14 +845,21 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 
 
 /* Keep row labels visible while comparing wide strategy tables. */
-.matrix-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 0 0 16px; }
-.matrix-controls label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--muted); }
-.matrix-controls select { max-width: 100%; min-height: 36px; }
+.matrix-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.matrix-label { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.matrix-header-sorts { display: inline-flex; gap: 2px; }
+.comparison-matrix .matrix-sort { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 26px; padding: 2px; border: 0; flex-shrink: 0; background: transparent; color: var(--muted); }
+.comparison-matrix .matrix-sort:hover, .comparison-matrix .matrix-sort[aria-pressed="true"] { color: var(--accent); background: var(--hover); }
 .comparison-matrix tr > :first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); border-right: 1px solid var(--line); }
 .comparison-matrix tbody tr:nth-child(even) > :first-child { background: var(--surface-alt); }
 .comparison-matrix tbody tr:hover > * { background: var(--hover); }
 .table-scroll th[aria-sort="ascending"] button, .table-scroll th[aria-sort="descending"] button { color: var(--text); font-weight: 700; }
-@media(max-width:600px) { .matrix-controls label { flex: 1 1 145px; } }
+.chart-method-legend { display: flex; position: relative; flex-wrap: wrap; gap: 6px 16px; padding: 12px 0; margin-bottom: 8px; }
+.chart-method-legend > button { display: inline-flex; align-items: center; gap: 7px; padding: 4px 0; border: 0; background: transparent; font-size: 14px; }
+.chart-method-legend > button:hover { color: var(--accent); }
+.chart-method-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.chart-method-tip { position: absolute; left: 0; top: 100%; z-index: 40; box-sizing: border-box; width: min(440px,100%); padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: 0 5px 20px #0002; font-size: 14px; line-height: 1.5; pointer-events: none; }
+.chart-method-tip p { margin: 6px 0 0; }
 
 /* Small controls within the existing category matrix; keep its cells and grouping. */
 .category-breakdown-table .category-sort { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; width: 22px; height: 24px; padding: 2px; margin-left: 3px; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
@@ -873,3 +880,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .category-header-controls { position: absolute; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-around; }
 .category-header-controls .category-sort { width: 16px; height: 22px; margin: 0; padding: 1px; }
 .category-label-actions > .category-sort { position: absolute; right: -14px; top: 0; }
+
+.corpus-summary { margin: 0 0 24px; line-height: 1.6; }
+.corpus-summary ul { margin: 6px 0; padding-left: 22px; }
+.corpus-summary small { color: var(--muted); }

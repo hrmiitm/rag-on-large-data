@@ -111,6 +111,17 @@ class JudgeTests(unittest.TestCase):
         self.write()
         self.assertIsNone(json.loads(self.path.read_text())['judge'])
 
+    def test_public_statistics_exclude_account_diagnostics(self):
+        answer = copy.deepcopy(record()['answers']['answer-model'])
+        answer['generation_metadata'] = {'data': {
+            'id':'gen-fixture', 'model':'fixture', 'total_cost':.01,
+            'tokens_prompt':17, 'workspace_id':'private-workspace',
+            'user_agent':'private-agent', 'external_user':'private-user'}}
+        stats = e.compact_answer(answer)['generation_statistics']
+        self.assertEqual(stats, {'id':'gen-fixture', 'model':'fixture',
+                                 'total_cost':.01, 'tokens_prompt':17})
+        self.assertIn('workspace_id', answer['generation_metadata']['data'])
+
     def test_score_validation(self):
         for score in (1.01, -.1, True, float('nan')):
             with self.subTest(score=score):

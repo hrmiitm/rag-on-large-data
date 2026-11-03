@@ -19,6 +19,11 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
+
+# Also works when the runner is imported through importlib by offline tests.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cost_control
 
 from jsonschema import Draft202012Validator
 
@@ -144,19 +149,36 @@ class Client:
         if not re.fullmatch(r'/openrouter/v1/(chat/completions|batches(?:/[A-Za-z0-9_-]+)?(?:\?limit=1)?)', path):
             raise ValueError('Only Foundry OpenRouter chat/batch paths are allowed')
         calls = []
+        budgeted = cost_control.enabled() and body is not None
+        if budgeted:
+            body = cost_control.constrain(body, path)
         # Batch POSTs are not automatically retried: an ambiguous response may
         # mean the paid job was accepted. The manifest records that uncertainty.
         for attempt in range(1, attempts+1):
-            call = {'attempt': attempt, 'started_at': now(), 'request': {
-                'method': 'POST' if body is not None else 'GET', 'url': self.base+path, 'body': body},
+            call = {'call_id': uuid.uuid4().hex, 'attempt': attempt, 'started_at': now(), 'request': {
+                'method': 'POST' if body is not None else 'GET', 'url': self.base+path, 'body': body,
+                'cache_control': 'no-cache'},
                 'response': None, 'raw_response': None, 'http_status': None, 'error': None,
                 'response_headers': {}}
+            if budgeted:
+                try:
+                    call['budget_reservation_usd'] = cost_control.reserve(call['call_id'], body, self.audit.name)
+                except cost_control.BudgetExceeded as error:
+                    call.update(http_attempted=False, ended_at=now(), latency_ms=0,
+                                error={'type':'budget_admission_denied','message':str(error)})
+                    call = self.clean(call)
+                    calls.append(call)
+                    with self.lock, self.audit.open('a') as stream:
+                        stream.write(json.dumps(call, ensure_ascii=False, allow_nan=False)+'\n')
+                    return None, calls
+            call['started_at'] = now()
             started = time.perf_counter()
             retryable = False
             try:
                 request = urllib.request.Request(self.base+path,
                     data=json.dumps(body, ensure_ascii=False, allow_nan=False).encode() if body is not None else None,
-                    headers={'Authorization': 'Bearer '+self.key, 'Content-Type': 'application/json'})
+                    headers={'Authorization': 'Bearer '+self.key, 'Content-Type': 'application/json',
+                             'Cache-Control': 'no-cache'})
                 # Do not forward credentials to a redirect host.
                 class NoRedirect(urllib.request.HTTPRedirectHandler):
                     def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -181,6 +203,8 @@ class Client:
                 call['error'] = {'type': type(error).__name__, 'message': str(error)}
                 retryable = isinstance(error, OSError)
             call.update(ended_at=now(), latency_ms=(time.perf_counter()-started)*1000)
+            if budgeted:
+                call['budget_receipt'] = cost_control.settle(call)
             call = self.clean(call)
             calls.append(call)
             with self.lock, self.audit.open('a') as stream:
@@ -200,7 +224,7 @@ class Client:
     @staticmethod
     def safe_headers(headers):
         return {k.lower(): v for k, v in headers.items() if k.lower() in
-                {'content-type', 'x-request-id', 'request-id', 'retry-after', 'date'}}
+                {'content-type', 'x-request-id', 'request-id', 'retry-after', 'date', 'x-cache', 'age'}}
 
 
 def payload(record, gold, answer, args):
@@ -237,6 +261,12 @@ def judge_result(body):
 
 
 def usage_metrics(calls, response):
+    attempted = [c for c in calls if c.get('http_attempted', True)]
+    if calls and not attempted:
+        return {'api_cost_usd':0, 'input_tokens':0, 'output_tokens':0, 'reasoning_tokens':0,
+                'cost_complete':True, 'usage_complete':True, 'llm_api_calls':0,
+                'http_time_ms':0, 'time_to_first_token_ms':None}
+    calls = attempted
     bodies = [c.get('response') or {} for c in calls] if calls else [response or {}]
     usages = [b.get('usage') or {} for b in bodies]
     def total(key):
@@ -365,6 +395,17 @@ def compact_judge(details):
     return value
 
 
+def public_generation_statistics(value):
+    """Keep benchmark statistics without provider account/tracking diagnostics."""
+    private = {'workspace_id', 'external_user', 'session_id', 'http_referer',
+               'user_agent', 'app_id', 'preset_id', 'organization_id', 'user_id'}
+    if isinstance(value, dict):
+        return {k: public_generation_statistics(v) for k, v in value.items() if k not in private}
+    if isinstance(value, list):
+        return [public_generation_statistics(v) for v in value]
+    return copy.deepcopy(value)
+
+
 def compact_answer(answer):
     excluded = {'api_calls', 'message', 'trace', 'agent_state', 'attempt_history', 'generation_metadata',
                 'context', 'retrieval', 'judge_details', 'tool_executions'}
@@ -372,7 +413,7 @@ def compact_answer(answer):
     value['judge_details'] = compact_judge(answer.get('judge_details'))
     if 'generation_metadata' in answer:
         metadata = answer['generation_metadata'] or {}
-        value['generation_statistics'] = copy.deepcopy(metadata.get('data', metadata))
+        value['generation_statistics'] = public_generation_statistics(metadata.get('data', metadata))
     if 'context' in answer:
         value['context'] = compact_context(answer['context'])
     if 'retrieval' in answer:

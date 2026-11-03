@@ -57,7 +57,7 @@ it('separates models and retains multiple configuration values instead of averag
   expect(screen.getAllByRole('table').length).toBe(2);
   const table=screen.getAllByRole('table').find(t=>t.getAttribute('aria-label')?.includes('gemini')||t.textContent?.includes('Config bbbbbbbb'))!;
   const correctness=within(table).getByRole('row',{name:/^Answer correctness/});
-  expect(within(correctness).getAllByRole('button').length).toBe(2);
+  expect(within(correctness).getAllByRole('button',{name:/^Inspect/}).length).toBe(2);
   expect(correctness.textContent).toContain('80.0%');
   expect(correctness.textContent).toContain('40.0%');
   expect(correctness.textContent).not.toContain('60.0%');
@@ -77,14 +77,16 @@ it('reveals additional recorded metrics on demand and does not add reasoning tok
 
 it('orders metric rows and strategy columns independently, with missing values last in either direction',async()=>{
   mount([row('expensive','q1',{cost:.5}),row('missing','q1',{cost:null}),row('cheap','q1',{cost:.01})]);
-  await userEvent.selectOptions(screen.getByLabelText('Metric rows'),'asc');
+  expect(screen.queryByRole('combobox')).toBeNull();
+  await userEvent.click(screen.getByRole('button',{name:'Sort metric rows by name'}));
   const labels=screen.getAllByRole('rowheader').map(c=>c.textContent!);
   expect(labels.slice(0,-1)).toEqual([...labels.slice(0,-1)].sort((a,b)=>a.localeCompare(b)));
   expect(labels.at(-1)).toBe('Judged answers');
-  await userEvent.selectOptions(screen.getByLabelText('Strategy columns'),'cost');
+  const costSort=screen.getByRole('button',{name:'Sort strategy columns by avg. api cost'});
+  await userEvent.click(costSort);
   expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','cheap','expensive','missing']);
   expect(values('Avg. API cost')).toEqual(['$0.0100','$0.5000','N/A']);
-  await userEvent.selectOptions(screen.getByLabelText('Column direction'),'desc');
+  await userEvent.click(costSort);
   expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','expensive','cheap','missing']);
   await userEvent.click(screen.getByRole('button',{name:'Reset order'}));
   expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','expensive','missing','cheap']);
@@ -92,8 +94,31 @@ it('orders metric rows and strategy columns independently, with missing values l
 });
 it('never pools multiple configurations to rank a strategy',async()=>{
   mount([row('multi','q1',{cost:.01}),row('multi','q2',{configuration:'b'.repeat(64),cost:.03}),row('single','q1',{cost:.5})]);
-  await userEvent.selectOptions(screen.getByLabelText('Strategy columns'),'cost');
+  await userEvent.click(screen.getByRole('button',{name:'Sort strategy columns by avg. api cost'}));
   expect(screen.getAllByRole('columnheader').map(c=>c.textContent)).toEqual(['Metric','single','multi']);
   expect(values('Avg. API cost')[1]).toContain('$0.0100');
   expect(values('Avg. API cost')[1]).toContain('$0.0300');
+});
+
+it('cycles inline arrows through ascending, descending and original order with keyboard access',async()=>{
+  mount([row('zebra','q1',{cost:.1}),row('alpha','q1',{cost:.01}),row('middle','q1',{cost:.05})]);
+  const names=()=>screen.getAllByRole('columnheader').map(c=>c.textContent);
+  const byName=screen.getByRole('button',{name:'Sort strategy columns by name'});
+  byName.focus();await userEvent.keyboard('{Enter}');
+  expect(names()).toEqual(['Metric','alpha','middle','zebra']);expect(byName.getAttribute('aria-pressed')).toBe('true');
+  await userEvent.keyboard(' ');expect(names()).toEqual(['Metric','zebra','middle','alpha']);
+  await userEvent.keyboard('{Enter}');expect(names()).toEqual(['Metric','zebra','alpha','middle']);expect(byName.getAttribute('aria-pressed')).toBe('false');
+  const rows=screen.getByRole('button',{name:'Sort metric rows by name'});
+  await userEvent.click(rows);await userEvent.click(rows);
+  const labels=screen.getAllByRole('rowheader').map(c=>c.textContent!);
+  expect(labels.slice(0,-1)).toEqual([...labels.slice(0,-1)].sort((a,b)=>b.localeCompare(a)));
+  await userEvent.click(rows);expect(screen.getAllByRole('rowheader')[0].textContent).toBe('Answer correctness');
+});
+
+it('sorts columns using each model table separately without mixing settings',async()=>{
+  mount([row('a','q1',{cost:.1}),row('b','q1',{cost:.2}),row('a','q2',{model:'other/model',cost:.9}),row('b','q2',{model:'other/model',cost:.3})]);
+  const tables=screen.getAllByRole('table');
+  await userEvent.click(within(tables[0]).getByRole('button',{name:'Sort strategy columns by avg. api cost'}));
+  const headers=tables.map(t=>within(t).getAllByRole('columnheader').slice(1).map(c=>c.textContent));
+  expect(headers).toContainEqual(['a','b']);expect(headers).toContainEqual(['b','a']);
 });

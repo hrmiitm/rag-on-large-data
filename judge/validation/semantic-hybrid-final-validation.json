@@ -1,0 +1,41 @@
+{
+  "checked_at": "2026-11-03T11:14:20.856866+00:00",
+  "passed": true,
+  "embedding_complete": true,
+  "full_judging_complete": true,
+  "methods": {
+    "semantic-search": {
+      "answers": 50,
+      "completed_judgments": 50,
+      "remaining_judgments": 0,
+      "source_sha256": "be345592fb89f5902a75a3fe5827b47b64d16d2373d556fe23e1003fe32ad9ff",
+      "original_answers_unchanged": true,
+      "previous_completed_judgments_preserved": 14,
+      "compact_export_schema_valid": true,
+      "full_gold_evidence_preserved": true,
+      "reported_answer_cost_usd": "0.68885475",
+      "reported_judge_cost_usd": "2.035728",
+      "output": "judge/final-results/q-a-eval-lume-semantic-search.jsonl"
+    },
+    "hybrid": {
+      "answers": 50,
+      "completed_judgments": 50,
+      "remaining_judgments": 0,
+      "source_sha256": "61b5781f890b7557873648e80c02a34f0e896ad0c851c152f1b63278813ab8f0",
+      "original_answers_unchanged": true,
+      "previous_completed_judgments_preserved": 12,
+      "compact_export_schema_valid": true,
+      "full_gold_evidence_preserved": true,
+      "reported_answer_cost_usd": "0.68606700",
+      "reported_judge_cost_usd": "2.069866",
+      "output": "judge/final-results/q-a-eval-lume-hybrid.jsonl"
+    }
+  },
+  "reported_costs_usd": {
+    "embedding": "10.59332436",
+    "answer_generation": "1.37492175",
+    "judging": "4.105594",
+    "total": "16.07384011",
+    "scope": "Reported API costs; unavailable usage on earlier interrupted/failed requests remains unknown."
+  }
+}

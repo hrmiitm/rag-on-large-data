@@ -1,8 +1,32 @@
 {
-  "title": "SEC Financial Sections", "filing_period": "January–June 2025", "forms": ["10-K", "10-Q"], "documents": 10469, "chunks": 640745, "section_spans": 16141,
-  "prepared_size": "390 MB compressed", "retained_size": "1.79 GB text", "body_tokens": 800, "overlap_tokens": 100,
+  "title": "SEC Financial Sections",
+  "filing_period": "January\u2013June 2025",
+  "forms": [
+    "10-K",
+    "10-Q"
+  ],
+  "documents": 10469,
+  "chunks": 640745,
+  "section_spans": 16141,
+  "prepared_size": "390 MB compressed",
+  "retained_size": "1.79 GB text",
+  "body_tokens": 800,
+  "overlap_tokens": 100,
   "scope": "Retained MD&A and financial statements with notes; historical reporting years vary by filing. The corpus is not a collection of complete filings.",
-  "sources": ["data/README.md", "AGENTS.md", "lume/bm25/db/config.json (read-only snapshot, 2026-11-03)"],
+  "sources": [
+    "data/README.md",
+    "AGENTS.md",
+    "lume/bm25/db/config.json (read-only snapshot, 2026-11-03)"
+  ],
   "corpus_sha256": "7bb35c942982526bf5132686288e08263c21e39acf0ca256d9ca7d5badb43a7b",
-  "note": "Document/chunk counts and sizes are the documented prepared corpus measurements, not a new ingestion or storage measurement. Index configurations may vary by method; verify each export's corpus hash."
+  "note": "Corpus totals describe retained sections, not complete filings. Words, UTF-8 bytes and source tokens were measured read-only from the prepared Parquet on 2026-11-03. Chunk counts describe the shared baseline chunking; index configurations may vary by method.",
+  "form_counts": {
+    "10-K": 4615,
+    "10-Q": 5854
+  },
+  "lexical_shards": 33,
+  "retained_words": 276228782,
+  "retained_utf8_bytes": 1792664837,
+  "source_tokens": 444518010,
+  "word_count_definition": "Whitespace-separated words in sections[].text; read-only streamed measurement on 2026-11-03."
 }

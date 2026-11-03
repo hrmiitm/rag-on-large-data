@@ -117,3 +117,18 @@ PYTHONDONTWRITEBYTECODE=1 lume/bm25/src/.venv/bin/python judge/sample_test.py --
 [Pages handoff](PAGES_HANDOFF.md) describes the minimal data/code set, the small Git policy, automatic method discovery, comparison semantics and features intentionally excluded from compact files. The root `.gitignore` retains questions, small source/docs and compact final results, while excluding local credentials and large/rebuildable artifacts.
 
 The native sample batch was accepted but remained `validating` when the local collection window ended. Its report is `pending`; native completion is not claimed. Rerun the batch sample command to collect the saved job without resubmission. The sample runner exits `2` for pending work, `1` for failed checks and `0` for passed checks.
+
+
+## Completed semantic and hybrid run
+
+On November 3, 2026, both `semantic-search` and `hybrid` completed all 50 Gemini answers and all 50 Sonnet 5.5 low/temperature-0 judgments. The earlier credit-related failures remain in audit/attempt history. The final resume preserved completed scores and original method files; read-only resume checks report zero pending judgments. Final exports are `final-results/q-a-eval-lume-semantic-search.jsonl` and `final-results/q-a-eval-lume-hybrid.jsonl`. See `validation/semantic-hybrid-final-validation.json` for source hashes, schema/score/gold checks and exact reported costs. Earlier sample/pending notes describe their recorded checkpoints rather than this completed run.
+
+
+## Completed six-method concurrent run
+
+On November 3, 2026, hybrid-rerank, HyDE, RRF, RRF-rerank, self-reflective RAG and semantic-rerank each completed all 50 judgments with Sonnet 5.5 low/temperature 0. Two five-worker processes reached ten concurrent requests; the measured HTTP window was 199.34 seconds. All 300 requests succeeded without retries, for $12.268684 reported judge cost under a separate $14 shared cap. All source answers and earlier judge exports were preserved; compact/gold/context/metrics/cost checks passed and every resume check found zero pending work. See [the measured report](validation/six-methods/final-report.json) and [campaign notes](validation/six-methods/README.md).
+
+The optional `RAG_JUDGE_BUDGET_LEDGER` environment variable enables the shared durable per-attempt spending guard in `cost_control.py`. This campaign ledger admits only concurrent Sonnet 5.5 calls, caps provider rates and includes in-flight/unknown reservations. Preserve the existing ledger on resume. Requests now explicitly bypass whole-response gateway caching with `Cache-Control: no-cache`; this changes transport behavior, not judge rubrics/model settings or completed-score fingerprints. Thirty offline tests passed. Earlier preparation/sample counts above describe their original checkpoints.
+
+
+Publication safety: compact generation statistics now omit provider account/tracking fields (workspace/user/session/application identifiers and user-agent/referrer diagnostics). Generation/request IDs, model/provider, usage/cost, timing and all benchmark metrics remain. The original full method audits remain unchanged and local. All ten compact exports were sanitized without new judging; [publication-report.json](validation/publication-report.json) records before/after hashes and preserved answers/scores/evidence/metrics. The privacy regression brings the offline judge suite to 31 passing tests.

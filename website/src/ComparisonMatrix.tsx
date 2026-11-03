@@ -1,4 +1,5 @@
 import {useMemo,useState} from 'react';
+import {ArrowDownUp,ArrowLeftRight,ArrowUp,ArrowDown,ArrowLeft,ArrowRight} from 'lucide-react';
 import {groupRows} from './data.mjs';
 import {color,metricMean,money,num,percent,seconds,shortModel} from './format';
 import type {Evaluation,Group,Hover} from './types';
@@ -45,6 +46,17 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
   const [rowOrder,setRowOrder]=useState('default');
   const [columnMetric,setColumnMetric]=useState('default');
   const [direction,setDirection]=useState('asc');
+  const toggleRows=()=>setRowOrder(old=>old==='default'?'asc':old==='asc'?'desc':'default');
+  const toggleColumns=(key:string)=>{
+    if(columnMetric!==key){setColumnMetric(key);setDirection('asc');}
+    else if(direction==='asc')setDirection('desc');
+    else {setColumnMetric('default');setDirection('asc');}
+  };
+  const columnButton=(key:string,label:string)=><button type="button" className="matrix-sort" aria-label={label}
+    title={`${label}; activate to sort ascending, descending, then restore original order`}
+    aria-pressed={columnMetric===key} onClick={()=>toggleColumns(key)}>
+    {columnMetric===key?(direction==='asc'?<ArrowRight size={12}/>:<ArrowLeft size={12}/>):<ArrowLeftRight size={12}/>}
+  </button>;
   const settings=useMemo(()=>{
     const grouped=new Map<string,{key:string;label:string;groups:Group[]}>();
     for(const group of groupRows(rows)) {
@@ -74,12 +86,10 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
     });
   };
   return <section className="results-summary" aria-labelledby="results-title">
-    <div className="results-heading"><h2 id="results-title">Results at a glance</h2><button aria-expanded={showMore} onClick={()=>setShowMore(!showMore)}>{showMore?'Fewer metrics':'More metrics'}</button></div>
-    <div className="matrix-controls">
-      <label>Metric rows <select value={rowOrder} onChange={e=>setRowOrder(e.target.value)}><option value="default">Default order</option><option value="asc">Name A–Z</option><option value="desc">Name Z–A</option></select></label>
-      <label>Strategy columns <select value={columnMetric} onChange={e=>setColumnMetric(e.target.value)}><option value="default">Default order</option><option value="name">Strategy name</option>{[...metrics,...extraMetrics].map(m=><option key={m.key} value={m.key}>{m.label}</option>)}</select></label>
-      <label>Column direction <select value={direction} disabled={columnMetric==='default'} onChange={e=>setDirection(e.target.value)}><option value="asc">Ascending</option><option value="desc">Descending</option></select></label>
+    <div className="results-heading"><h2 id="results-title">Results at a glance</h2><div className="matrix-actions">
       <button disabled={rowOrder==='default'&&columnMetric==='default'} onClick={()=>{setRowOrder('default');setColumnMetric('default');setDirection('asc');}}>Reset order</button>
+      <button aria-expanded={showMore} onClick={()=>setShowMore(!showMore)}>{showMore?'Fewer metrics':'More metrics'}</button>
+    </div>
     </div>
     {settings.map(setting=><div className="matrix-setting" key={setting.key}>
       <h3 className="matrix-setting-title" title={setting.groups[0].model}>{setting.label}
@@ -88,12 +98,17 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
       <div className="matrix-scroll">
         <table className="comparison-matrix">
           <caption className="sr-only">Benchmark metrics by retrieval strategy for {setting.label}.</caption>
-          <thead><tr><th scope="col">Metric</th>{orderedMethods(setting.groups).map(method=><th scope="col" key={method}>
+          <thead><tr><th scope="col"><span className="matrix-label"><span>Metric</span><span className="matrix-header-sorts">
+            <button type="button" className="matrix-sort" aria-label="Sort metric rows by name" title="Sort metric rows A–Z, Z–A, then restore original order" aria-pressed={rowOrder!=='default'} onClick={toggleRows}>
+              {rowOrder==='default'?<ArrowDownUp size={12}/>:rowOrder==='asc'?<ArrowUp size={12}/>:<ArrowDown size={12}/>}
+            </button>
+            {columnButton('name','Sort strategy columns by name')}
+          </span></span></th>{orderedMethods(setting.groups).map(method=><th scope="col" key={method}>
             <span className="method-name"><i style={{background:color(method)}}/>{method}</span>
           </th>)}</tr></thead>
           <tbody>
             {visibleMetrics.map(metric=><tr key={metric.key}>
-              <th scope="row">{metric.label}</th>
+              <th scope="row"><span className="matrix-label"><span>{metric.label}</span>{columnButton(metric.key,`Sort strategy columns by ${metric.label.toLowerCase()}`)}</span></th>
               {orderedMethods(setting.groups).map(method=>{
                 const groups=setting.groups.filter(g=>g.method===method);
                 return <td key={method} className={hover?.method&&hover.method!==method?'faded':''}>
@@ -116,6 +131,6 @@ export default function ComparisonMatrix({rows,methods,hover,setHover,onOpen}:{
       </div>
     </div>)}
     {!settings.length&&<p className="empty">No results for this selection.</p>}
-    <p className="table-note">Averages use the selected answers. Hover for sample counts; select a value to inspect its questions. Column sorting uses each table’s values; unavailable or multiple-configuration values stay last. Judged coverage stays at the bottom.</p>
+    <p className="table-note">Use the small arrows to order metric names (↕) or strategy columns (↔); activate again to reverse, then reset. Hover values for sample counts; select a value to inspect questions. Unavailable or multiple-configuration values stay last. Judged coverage stays at the bottom.</p>
   </section>;
 }

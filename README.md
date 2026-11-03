@@ -1,4 +1,4 @@
-# SEC Financial RAG Benchmark: BM25 vs. Agentic Search
+# SEC Financial RAG Benchmark
 
 Comprehensive benchmark comparing retrieval strategies for financial question answering on 10,000+ SEC filings across answer correctness, faithfulness, serving API cost, latency, and evidence grounding.
 
@@ -12,6 +12,14 @@ Comprehensive benchmark comparing retrieval strategies for financial question an
 | :--- | :--- | :--- | :--- | :--- |
 | **`lume-bm25`** | Native Lume BM25 | Single-pass top-$k$ retrieval | Gemini 3.8 Flash (High Reasoning) | 33 shards / 640,745 chunks |
 | **`lume-agentic-search`** | Native Lume + Tool Loop | Multi-turn query decomposition & tool calls | Gemini 3.8 Flash (High Reasoning) | 33 shards / 640,745 chunks |
+| **`lume-semantic-search`** | Native Lume exact cosine | Shared OpenAI small embeddings, no lexical/graph boost | Gemini 3.8 Flash (High Reasoning) | 33 shards / 640,745 chunks |
+| **`lume-hybrid`** | Native Lume BM25 + cosine | Multiplicative fusion, alpha 0.5, graph 0 | Gemini 3.8 Flash (High Reasoning) | Same shared vector corpus |
+| **`lume-hybrid-rerank`** | Native hybrid + cross-encoder | Rerank 50 candidates locally | Gemini 3.8 Flash (High Reasoning) | Same shared vector corpus |
+| **`lume-semantic-rerank`** | Exact cosine + cross-encoder | Rerank 50 candidates locally | Gemini 3.8 Flash (High Reasoning) | Same shared vector corpus |
+| **`lume-rrf`** | BM25 + exact cosine | Reciprocal rank fusion, constant 60 | Gemini 3.8 Flash (High Reasoning) | Same shared vector corpus |
+| **`lume-rrf-rerank`** | RRF + cross-encoder | Rerank the best 50 fused candidates | Gemini 3.8 Flash (High Reasoning) | Same shared vector corpus |
+| **`lume-hyde`** | Hypothetical query + exact cosine | Embed generated query passages only | Gemini 3.8 Flash (High Reasoning) | Same shared vector corpus |
+| **`lume-self-reflective-rag`** | Hybrid + bounded draft review | At most one extra search and revision | Gemini 3.8 Flash (High Reasoning) | Same shared vector corpus |
 
 ---
 
@@ -126,3 +134,21 @@ npm run test:ui  # DOM & UI integration tests (27 tests)
 Pushing to `main` triggers GitHub Actions (`.github/workflows/benchmark-pages.yml`), which tests, generates versioned static data, and publishes the website to GitHub Pages:
 
 **[https://hrmiitm.github.io/rag-on-large-data/](https://hrmiitm.github.io/rag-on-large-data/)**
+
+
+## Semantic and hybrid ingestion/evaluation
+
+The [shared pipeline guide](lume/semantic-search/src/README.md) sets up `lume/semantic-search/` and `lume/hybrid/` with one reusable, resumable OpenAI `text-embedding-3-small` embedding pass through **LLM Foundry's OpenRouter route**. Pure semantic retrieval uses cosine alone; hybrid uses Lume's native multiplicative BM25/cosine blend. Both preserve the baseline chunking and original offsets. Original BM25 and agentic experiments remain separate.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 lume/semantic-search/src/.venv/bin/python -u lume/semantic-search/src/run_all.py
+```
+
+This supervisor runs shared ingestion, both 50-question Gemini HIGH evaluations with five workers each, then both Claude Sonnet 5.5 low/temperature-0 judges in concurrent mode. Check `lume/semantic-search/db/pipeline-state.json` before starting a second process: it records actual progress and completion. The method definitions above describe the configured experiments; their full live completion must be established from that state and the resulting exports. Final files are discovered automatically by the existing website build. See [validation](lume/semantic-search/src/VALIDATION.md) for offline checks and the distinction from live completion.
+
+
+## Completed shared-vector extensions
+
+The six additional methods each completed 50 answer generations and 50 gold-reference judgments. They reuse the existing corpus embeddings; only HyDE and reflection queries require new query vectors. See the [method/runtime guide](lume/hybrid-rerank/runtime/README.md), [self-reflective method](lume/self-reflective-rag/README.md), and [judge validation report](judge/validation/six-methods/final-report.json).
+
+The six-method answer-generation campaign recorded $5.29044809 in API cost. Its separate Sonnet 5.5 low/temperature-0 judging campaign recorded $12.268684 under a $14 cap, completing 300 judgments with ten concurrent requests and no retries. Full source answers remain local; compact results are published in `judge/final-results/` and discovered automatically by the Pages build. Scores are model judgments, not independently established human accuracy.

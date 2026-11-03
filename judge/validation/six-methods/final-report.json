@@ -1,0 +1,135 @@
+{
+  "checked_at_utc": "2026-11-03T15:24:37.665719+00:00",
+  "methods": {
+    "hybrid-rerank": {
+      "answers": 50,
+      "completed_judgments": 50,
+      "source_unchanged": true,
+      "source_sha256": "271dd4e82eb5c0e341632f96a0b21cadf6e3d752510b8f5e9f0e197e29c56019",
+      "schema_gold_context_metrics_valid": true,
+      "resume_pending": 0,
+      "http_attempts": 50,
+      "reported_judge_cost_usd": "2.022024",
+      "score_means": {
+        "answer_correctness": 0.5566,
+        "context_relevance": 0.5644,
+        "faithfulness": 0.9102,
+        "answer_relevance": 0.6714
+      },
+      "output": "judge/final-results/q-a-eval-lume-hybrid-rerank.jsonl",
+      "output_sha256": "b8e21dde525b60c22b95777c0ac9bfebd3b7875f19001410962abddaf5c55791"
+    },
+    "hyde": {
+      "answers": 50,
+      "completed_judgments": 50,
+      "source_unchanged": true,
+      "source_sha256": "ec66fe8b57c7307c8482fada3408b78f48d58ec682c9b9d081aa1e9040c6b1c6",
+      "schema_gold_context_metrics_valid": true,
+      "resume_pending": 0,
+      "http_attempts": 50,
+      "reported_judge_cost_usd": "2.058224",
+      "score_means": {
+        "answer_correctness": 0.684,
+        "context_relevance": 0.682,
+        "faithfulness": 0.9274,
+        "answer_relevance": 0.759
+      },
+      "output": "judge/final-results/q-a-eval-lume-hyde.jsonl",
+      "output_sha256": "9d31393670c8db603da4f89a78b88c89347bd8dc570c3df6776963e45fc09eff"
+    },
+    "rrf": {
+      "answers": 50,
+      "completed_judgments": 50,
+      "source_unchanged": true,
+      "source_sha256": "14352e85d9654bb27540fef39288e9a8f8f057758df8920da5aa00c17ad58e57",
+      "schema_gold_context_metrics_valid": true,
+      "resume_pending": 0,
+      "http_attempts": 50,
+      "reported_judge_cost_usd": "2.062820",
+      "score_means": {
+        "answer_correctness": 0.6596,
+        "context_relevance": 0.6812,
+        "faithfulness": 0.9228000000000001,
+        "answer_relevance": 0.7644
+      },
+      "output": "judge/final-results/q-a-eval-lume-rrf.jsonl",
+      "output_sha256": "d3e44261afff4faf3a0bfa90852c8b82aca315f70df2d94556e98ca400ce17bb"
+    },
+    "rrf-rerank": {
+      "answers": 50,
+      "completed_judgments": 50,
+      "source_unchanged": true,
+      "source_sha256": "8eb418e6ea6b8561f5d61f242d8af2f88934774e360e5e5817bfcb08398383b9",
+      "schema_gold_context_metrics_valid": true,
+      "resume_pending": 0,
+      "http_attempts": 50,
+      "reported_judge_cost_usd": "2.025912",
+      "score_means": {
+        "answer_correctness": 0.5716,
+        "context_relevance": 0.5834,
+        "faithfulness": 0.9168,
+        "answer_relevance": 0.6829999999999999
+      },
+      "output": "judge/final-results/q-a-eval-lume-rrf-rerank.jsonl",
+      "output_sha256": "1da98791a2aa57e2531b2ea6168a2f843bd083e55fdc793043413f496d627613"
+    },
+    "self-reflective-rag": {
+      "answers": 50,
+      "completed_judgments": 50,
+      "source_unchanged": true,
+      "source_sha256": "68a0f9a758388eaec9dd686a15a1fd7e0d3888771b41802b86d9740cd2645428",
+      "schema_gold_context_metrics_valid": true,
+      "resume_pending": 0,
+      "http_attempts": 50,
+      "reported_judge_cost_usd": "2.070848",
+      "score_means": {
+        "answer_correctness": 0.718,
+        "context_relevance": 0.7028,
+        "faithfulness": 0.9225999999999999,
+        "answer_relevance": 0.7984
+      },
+      "output": "judge/final-results/q-a-eval-lume-self-reflective-rag.jsonl",
+      "output_sha256": "b8b52ffe1d3a159cb6e73156b24a5cf9dadbcf2cf74f6ed4ee2cd452b9d88810"
+    },
+    "semantic-rerank": {
+      "answers": 50,
+      "completed_judgments": 50,
+      "source_unchanged": true,
+      "source_sha256": "d8bb0f7f33246a38fcc9ad39948017f72384d2645cd79f67f3419bb8c6078976",
+      "schema_gold_context_metrics_valid": true,
+      "resume_pending": 0,
+      "http_attempts": 50,
+      "reported_judge_cost_usd": "2.028856",
+      "score_means": {
+        "answer_correctness": 0.5452,
+        "context_relevance": 0.5761999999999999,
+        "faithfulness": 0.9026,
+        "answer_relevance": 0.6746
+      },
+      "output": "judge/final-results/q-a-eval-lume-semantic-rerank.jsonl",
+      "output_sha256": "466c79b8148b5ec3d114d46081e2df7a0699267c436fae337ae5f1876ce5fc42"
+    }
+  },
+  "offline_tests_passed": 30,
+  "judge_settings": {
+    "model": "anthropic/claude-sonnet-5.5",
+    "reasoning_effort": "low",
+    "temperature": 0,
+    "max_output_tokens": 4096
+  },
+  "scheduling": "two method processes with five workers each; at most ten concurrent requests",
+  "passed": true,
+  "completed_judgments": 300,
+  "judge_http_attempts": 300,
+  "judge_retries": 0,
+  "http_errors": 0,
+  "reported_judge_cost_usd": "12.268684",
+  "judge_budget_usd": 14,
+  "reported_answer_generation_cost_usd": "5.29044809",
+  "combined_recorded_cost_usd": "17.55913209",
+  "peak_concurrent_judge_requests": 10,
+  "judging_http_window_seconds": 199.337251,
+  "answer_sources_unchanged": 6,
+  "publication_metadata_cleanup": "Provider account/tracking diagnostics removed from compact exports after judging; answers, scores, evidence and metrics preserved. See ../publication-report.json.",
+  "previous_judge_exports_unchanged_before_publication": 4
+}

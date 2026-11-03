@@ -1,0 +1,10 @@
+{
+  "google/gemini-3.8-flash": {
+    "input_usd_per_million": 0.75,
+    "output_usd_per_million": 3.75,
+    "cached_input_usd_per_million": 0.075,
+    "valid_through": "2026-12-31",
+    "source": "https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash",
+    "cost_kind": "public_standard_list_price_estimate_not_proxy_invoice"
+  }
+}

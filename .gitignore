@@ -2,6 +2,13 @@
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+credentials.json
 
 # Python environments, bytecode and downloaded toolchains/caches.
 .venv/
@@ -21,6 +28,7 @@ __pycache__/
 
 # Rebuildable retrieval databases and complete local generation/audit records.
 /lume/*/db/
+/lume/*/runtime/db/
 /lume/*/q-a.jsonl
 *.log
 *.sqlite
@@ -31,6 +39,7 @@ __pycache__/
 # Downloaded native dependency sources, built binaries and build outputs.
 /lume/*/src/bin/
 /lume/*/src/native/vendor/
+/lume/*/runtime/src/native/vendor/
 target/
 node_modules/
 build/
@@ -44,6 +53,16 @@ _site/
 /judge/validation/*.audit.jsonl
 /judge/validation/*.state.json
 /judge/validation/*.lock
+
+# Retain final, sanitized evidence; keep recovery probes and campaign state local.
+/judge/validation/semantic-hybrid-*.json
+!/judge/validation/semantic-hybrid-final-validation.json
+/judge/validation/six-methods/*
+!/judge/validation/six-methods/README.md
+!/judge/validation/six-methods/final-report.json
+!/judge/validation/six-methods/model-pricing.json
+!/judge/validation/six-methods/run.py
+!/judge/validation/six-methods/verify.py
 
 # Editor / OS local files.
 .DS_Store

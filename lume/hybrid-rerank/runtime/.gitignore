@@ -1,0 +1,4 @@
+/db/
+/src/native/vendor/
+/src/native/target/
+/src/.cargo/

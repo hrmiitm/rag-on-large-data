@@ -1,0 +1,177 @@
+{
+  "methods": {
+    "hybrid-rerank": {
+      "records": 50,
+      "completed_answers": 50,
+      "issues": [],
+      "paid_attempts": 52,
+      "reported_cost_usd": 0.7460924999999999,
+      "cost_unknown_attempts": 0,
+      "http_errors": {},
+      "max_simultaneous_paid_http_requests": 4,
+      "native_peak_rss_mb": 1101.859375,
+      "metadata_available": 52,
+      "result_file": "lume/hybrid-rerank/q-a.jsonl",
+      "result_sha256": "271dd4e82eb5c0e341632f96a0b21cadf6e3d752510b8f5e9f0e197e29c56019",
+      "question_workers": 5,
+      "max_context_tokens": 8494,
+      "reflection_decisions": {},
+      "recorded_cost_usd": 0.7460925
+    },
+    "hyde": {
+      "records": 50,
+      "completed_answers": 50,
+      "issues": [],
+      "paid_attempts": 150,
+      "reported_cost_usd": 0.94411691,
+      "cost_unknown_attempts": 0,
+      "http_errors": {},
+      "max_simultaneous_paid_http_requests": 5,
+      "native_peak_rss_mb": 978.0546875,
+      "metadata_available": 100,
+      "result_file": "lume/hyde/q-a.jsonl",
+      "result_sha256": "ec66fe8b57c7307c8482fada3408b78f48d58ec682c9b9d081aa1e9040c6b1c6",
+      "question_workers": 5,
+      "max_context_tokens": 8496,
+      "reflection_decisions": {},
+      "recorded_cost_usd": 0.94411691
+    },
+    "rrf": {
+      "records": 50,
+      "completed_answers": 50,
+      "issues": [],
+      "paid_attempts": 51,
+      "reported_cost_usd": 0.75456525,
+      "cost_unknown_attempts": 0,
+      "http_errors": {},
+      "max_simultaneous_paid_http_requests": 5,
+      "native_peak_rss_mb": 1110.2734375,
+      "metadata_available": 51,
+      "result_file": "lume/rrf/q-a.jsonl",
+      "result_sha256": "14352e85d9654bb27540fef39288e9a8f8f057758df8920da5aa00c17ad58e57",
+      "question_workers": 5,
+      "max_context_tokens": 8494,
+      "reflection_decisions": {},
+      "recorded_cost_usd": 0.75456525
+    },
+    "rrf-rerank": {
+      "records": 50,
+      "completed_answers": 50,
+      "issues": [],
+      "paid_attempts": 50,
+      "reported_cost_usd": 0.6783885,
+      "cost_unknown_attempts": 0,
+      "http_errors": {},
+      "max_simultaneous_paid_http_requests": 3,
+      "native_peak_rss_mb": 1103.828125,
+      "metadata_available": 50,
+      "result_file": "lume/rrf-rerank/q-a.jsonl",
+      "result_sha256": "8eb418e6ea6b8561f5d61f242d8af2f88934774e360e5e5817bfcb08398383b9",
+      "question_workers": 5,
+      "max_context_tokens": 8495,
+      "reflection_decisions": {},
+      "recorded_cost_usd": 0.6783885
+    },
+    "self-reflective-rag": {
+      "records": 50,
+      "completed_answers": 50,
+      "issues": [],
+      "paid_attempts": 142,
+      "reported_cost_usd": 1.45740168,
+      "cost_unknown_attempts": 0,
+      "http_errors": {},
+      "max_simultaneous_paid_http_requests": 5,
+      "native_peak_rss_mb": 1110.44921875,
+      "metadata_available": 121,
+      "result_file": "lume/self-reflective-rag/q-a.jsonl",
+      "result_sha256": "68a0f9a758388eaec9dd686a15a1fd7e0d3888771b41802b86d9740cd2645428",
+      "question_workers": 5,
+      "max_context_tokens": 8494,
+      "reflection_decisions": {
+        "accept": 29,
+        "retrieve": 21
+      },
+      "recorded_cost_usd": 1.45740168
+    },
+    "semantic-rerank": {
+      "records": 50,
+      "completed_answers": 50,
+      "issues": [],
+      "paid_attempts": 50,
+      "reported_cost_usd": 0.70988325,
+      "cost_unknown_attempts": 0,
+      "http_errors": {},
+      "max_simultaneous_paid_http_requests": 3,
+      "native_peak_rss_mb": 977.5,
+      "metadata_available": 50,
+      "result_file": "lume/semantic-rerank/q-a.jsonl",
+      "result_sha256": "d8bb0f7f33246a38fcc9ad39948017f72384d2645cd79f67f3419bb8c6078976",
+      "question_workers": 5,
+      "max_context_tokens": 8491,
+      "reflection_decisions": {},
+      "recorded_cost_usd": 0.70988325
+    }
+  },
+  "judge_run": false,
+  "overall": {
+    "reported_cost_usd": 5.29044809,
+    "committed_usd": 5.29044809,
+    "paid_attempts": 495,
+    "saved_unique_paid_calls": 495,
+    "max_simultaneous_paid_http_requests": 5,
+    "budget_cap_usd": 10,
+    "admission_limit_usd": 9.5,
+    "halted": null
+  },
+  "complete": true,
+  "completed_at_utc": "2026-11-03T13:07:20.895056+00:00",
+  "answer_generation_complete": true,
+  "metadata_complete": true,
+  "offline_tests": {
+    "shared_runtime": 23,
+    "self_reflective": 11,
+    "passed": 34
+  },
+  "integrity_checks_passed": true,
+  "final_setup_checks_passed": 6,
+  "original_method_snapshots": {
+    "checked": 12,
+    "unchanged": 12,
+    "details": "db/original-method-final-audit.json"
+  },
+  "model": "google/gemini-3.8-flash",
+  "reasoning": "HIGH",
+  "max_output_tokens": 8192,
+  "method_schedule": "sequential; five concurrent question workers per method",
+  "metadata_chat_attempts": 424,
+  "query_embedding_attempts": 71,
+  "metadata_available_attempts": 424,
+  "unique_generation_ids": 423,
+  "replayed_generation_ids": {
+    "gen-1793705707-fqczIXjNtxZwL6x7IN7g": [
+      "10ca0cee5efb49c7a8dd896483ce2bc8",
+      "e444ca71d2114bf4a05c1728574a09e9"
+    ]
+  },
+  "truncated_attempts": [
+    {
+      "question_id": "q065",
+      "call_id": "10ca0cee5efb49c7a8dd896483ce2bc8",
+      "generation_id": "gen-1793705707-fqczIXjNtxZwL6x7IN7g"
+    },
+    {
+      "question_id": "q065",
+      "call_id": "e444ca71d2114bf4a05c1728574a09e9",
+      "generation_id": "gen-1793705707-fqczIXjNtxZwL6x7IN7g"
+    },
+    {
+      "question_id": "q065",
+      "call_id": "5dff4b80c15242b69ccdbfbf7f941bd7",
+      "generation_id": "gen-1793707227-vfHyXgkP9OjJBztGIwfI"
+    }
+  ],
+  "budget_accounting": "Sum of all returned usage.cost receipts, including a conservatively counted cached replay; this is not an invoice reconciliation.",
+  "transport_correction": "Cache-Control: no-cache; existing successful responses and original configuration hashes preserved through one explicit transport-only compatibility transition.",
+  "native_address_space_limit_bytes": 2147483648,
+  "quality_scores_available": false
+}

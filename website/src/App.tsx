@@ -85,6 +85,16 @@ export default function App(){
            {!filtered.length&&rows.length>0&&<p className="empty">No evaluations match this selection. Clear a filter to continue.</p>}
          </>}
          {page==='overview'&&<>
+           <section className="corpus-summary" aria-label="Corpus at a glance">
+             <strong>Corpus at a glance</strong>
+             <ul>
+               <li>{num(manifest.dataset.documents,0)} filing documents: {num(manifest.dataset.form_counts?.['10-K'],0)} annual (10-K) and {num(manifest.dataset.form_counts?.['10-Q'],0)} quarterly (10-Q), from {manifest.dataset.filing_period}.</li>
+               <li>{num(manifest.dataset.section_spans,0)} retained section spans: MD&amp;A and financial statements/notes, rather than complete filings.</li>
+               <li>{num(manifest.dataset.chunks,0)} BM25 chunks across {num(manifest.dataset.lexical_shards,0)} shards; the same chunks supply semantic/hybrid vectors. {num(manifest.dataset.body_tokens,0)} body tokens per chunk, with {num(manifest.dataset.overlap_tokens,0)} overlap.</li>
+               <li>Average retained filing: about {num(manifest.dataset.documents>0?manifest.dataset.retained_words/manifest.dataset.documents:null,0)} words / {num(manifest.dataset.documents>0?manifest.dataset.source_tokens/manifest.dataset.documents:null,0)} tokens. Total: {manifest.dataset.retained_size}; {manifest.dataset.prepared_size} Parquet.</li>
+             </ul>
+             <small>Full corpus totals, independent of filters. Words are whitespace-separated; reference answers and evidence stay outside the retrieval index.</small>
+           </section>
            <ComparisonMatrix rows={filtered} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} hover={hover} setHover={setHover} onOpen={openGroup}/>
            <CategoryBreakdownTable rows={rows} categories={manifest.categories} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} manifest={manifest} questions={questions} onSelectCategory={(cat)=>{setFilters(f=>({...f,categories:[cat]}));navigate('questions');}}/>
            {pending>0&&complete===0&&<p className="pending-note">Judgments are pending for {pending} answers. Measured costs and response times are available.</p>}
