@@ -854,14 +854,46 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .comparison-matrix tbody tr:nth-child(even) > :first-child { background: var(--surface-alt); }
 .comparison-matrix tbody tr:hover > * { background: var(--hover); }
 .table-scroll th[aria-sort="ascending"] button, .table-scroll th[aria-sort="descending"] button { color: var(--text); font-weight: 700; }
-.chart-method-legend { display: flex; position: relative; flex-wrap: wrap; gap: 6px 16px; padding: 12px 0; margin-bottom: 8px; }
-.chart-method-legend > button { display: inline-flex; align-items: center; gap: 7px; padding: 4px 0; border: 0; background: transparent; font-size: 14px; }
-.chart-method-legend > button:hover { color: var(--accent); }
-.chart-method-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.chart-method-tip { position: absolute; left: 0; top: 100%; z-index: 40; box-sizing: border-box; width: min(440px,100%); padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: 0 5px 20px #0002; font-size: 14px; line-height: 1.5; pointer-events: none; }
-.chart-method-tip p { margin: 6px 0 0; }
-
-/* Small controls within the existing category matrix; keep its cells and grouping. */
+/* Numbered method controls replace the floating, hover-only legend. */
+.chart-method-legend { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px; padding:18px 0; }
+.chart-method-legend > button { display:flex; align-items:center; gap:9px; padding:9px 10px; text-align:left; font-size:14px; border:1px solid var(--line); border-radius:6px; background:var(--surface); min-width:0; }
+.chart-method-legend > button > span:last-child { overflow-wrap:anywhere; }
+.chart-method-legend > button:hover { background:var(--surface-alt); }
+.chart-method-legend > button[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); color:var(--text); }
+.chart-method-number { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; flex:0 0 24px; border-radius:50%; color:#fff; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+.chart-scatter-controls { border-block:1px solid var(--line); padding:14px 0; margin:0; }
+.chart-scatter-controls > button { margin-left:auto; }
+.chart-reading-note { color:var(--muted); font-size:13px; line-height:1.6; margin:12px 0 0; }
+.chart-selection { background:var(--surface-alt); border:1px solid var(--line); border-radius:8px; padding:18px; margin:12px 0 18px; }
+.chart-selection-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.chart-selection-heading h3 { display:flex; align-items:center; gap:10px; font-size:17px; margin:0; }
+.chart-selection-heading > button { font-size:13px; }
+.chart-series-picker { display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin:16px 0; }
+.chart-series-picker select { max-width:100%; min-width:0; font-size:13px; }
+.chart-selection-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; margin:18px 0; }
+.chart-selection-metrics dt { color:var(--muted); font-size:13px; }
+.chart-selection-metrics dd { margin:5px 0 2px; font-size:23px; font-weight:600; font-variant-numeric:tabular-nums; }
+.chart-selection-metrics small { color:var(--muted); font-size:12px; }
+.chart-technique { border-top:1px solid var(--line); padding-top:10px; font-size:14px; line-height:1.6; }
+.chart-technique p { margin:6px 0; }
+.chart-inspect { margin-top:14px; }
+.chart-selection-hint { margin:0; color:var(--muted); font-size:14px; line-height:1.6; }
+.chart-values { margin-bottom:16px; font-size:13px; }
+.chart-values summary { cursor:pointer; padding:8px 0; }
+.chart-values-scroll { overflow:auto; }
+.chart-values table { width:100%; border-collapse:collapse; font-size:13px; }
+.chart-values caption { text-align:left; color:var(--muted); padding:10px 0; }
+.chart-values th,.chart-values td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+.chart-values th button { text-align:left; padding:0; border:0; background:transparent; font-size:13px; }
+.chart-values td { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.chart-values td small { display:block; color:var(--muted); }
+@media(max-width:700px) {
+ .chart-method-legend { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+ .chart-method-legend > button { font-size:12px; padding:8px 6px; }
+ .chart-selection { padding:14px; }
+ .chart-selection-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .chart-scatter-controls > button { margin-left:0; }
+}
 .category-breakdown-table .category-sort { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; width: 22px; height: 24px; padding: 2px; margin-left: 3px; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
 .category-breakdown-table .category-sort:hover, .category-breakdown-table .category-sort[aria-pressed="true"] { color: var(--accent); background: var(--hover); }
 .category-label-actions { position: relative; display: block; }
@@ -884,3 +916,5 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .corpus-summary { margin: 0 0 24px; line-height: 1.6; }
 .corpus-summary ul { margin: 6px 0; padding-left: 22px; }
 .corpus-summary small { color: var(--muted); }
+
+.heatmap th small { display:block; font-weight:400; color:var(--muted); font-size:12px; margin-top:4px; }
