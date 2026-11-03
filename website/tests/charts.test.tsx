@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Charts,{paretoFrontiers} from '../src/Charts';
 import {groupRows} from '../src/data.mjs';
-import {methodDescription} from '../src/MethodLegend';
+import {methodDescription,accuracyOrder} from '../src/MethodLegend';
 import {normalize} from '../scripts/normalize.mjs';
 import type {Evaluation} from '../src/types';
 
@@ -22,7 +22,7 @@ it('uses numbered, distinct method controls and concise scatter hovers without o
   for(const row of rows)expect(within(legend).getByRole('button',{name:row.method,exact:true})).toBeTruthy();
   expect(screen.queryByRole('tooltip')).toBeNull();
   expect(new Set(traces().map(t=>t.marker.color)).size).toBe(4);
-  for(const [i,trace] of traces().entries()){expect(trace.mode).toBe('markers+text');expect(trace.text).toEqual([String(i+1)]);expect(trace.hovertemplate).toContain('Configuration:');expect(trace.hovertemplate).not.toContain('LLM receives:');}
+  for(const trace of traces()){expect(trace.mode).toBe('markers+text');expect(trace.text).toEqual(['1']);expect(trace.hovertemplate).toContain('Configuration:');expect(trace.hovertemplate).not.toContain('LLM receives:');}
   expect(screen.getByLabelText('Cost axis')).toHaveProperty('value','linear');expect(screen.getByRole('checkbox',{name:'Show Pareto frontier'})).toHaveProperty('checked',true);await userEvent.click(screen.getByRole('checkbox',{name:'Show Pareto frontier'}));expect(screen.getByRole('checkbox',{name:'Show Pareto frontier'})).toHaveProperty('checked',false);
   await userEvent.selectOptions(screen.getByLabelText('Chart view'),'latency');
   expect(traces()).toHaveLength(4);expect(screen.getByLabelText('Chart quality metric')).toBeTruthy();
@@ -44,7 +44,7 @@ it('keeps configurations separate and inspects only the explicitly selected seri
   const data=[{...rows[0],method:'future-hybrid-v9'},{...rows[0],id:'other-config',method:'future-hybrid-v9',configuration:'b'.repeat(64),cost:.09}];
   const {open}=mount(data);await userEvent.click(within(screen.getByTestId('chart-series')).getAllByRole('button')[1]);
   expect(open).not.toHaveBeenCalled();const panel=screen.getByLabelText('Selected chart series');
-  expect(panel.textContent).toContain('BM25 keyword matching');expect(panel.textContent).not.toContain('multiplicative');expect(panel.textContent).toContain('$0.0900');
+  expect(panel.textContent).toContain('BM25 is a keyword relevance score');expect(panel.textContent).not.toContain('multiplicative');expect(panel.textContent).toContain('$0.0900');
   expect(within(screen.getByLabelText('Selected method series')).getAllByRole('option')).toHaveLength(2);
   await userEvent.click(screen.getByRole('button',{name:'Inspect answers →'}));expect(open).toHaveBeenCalledWith(expect.objectContaining({method:'future-hybrid-v9',configuration:'b'.repeat(64)}));
   await userEvent.selectOptions(screen.getByLabelText('Selected method series'),traces()[0].customdata[0]);
@@ -62,7 +62,7 @@ it('updates the selected quality measure, exposes missing measurements and keeps
 it('documents all ten adapters from recorded identities and keeps unknown adapters explicit',()=>{
   for(const sourceMethod of ['bm25','agentic','semantic-search','hybrid','hybrid-rerank','semantic-rerank','rrf','rrf-rerank','hyde','self-reflective-rag'])expect(methodDescription([{...seed,sourceMethod}]).search).not.toContain('not documented');
   expect(methodDescription([{...seed,sourceMethod:'hyde'}]).sent).toContain('never supplied as evidence');
-  expect(methodDescription([{...seed,sourceMethod:'self-reflective-rag'}]).search).toContain('one extra search');
+  expect(methodDescription([{...seed,sourceMethod:'self-reflective-rag'}]).search).toContain('one extra evidence search');
   expect(methodDescription([{...seed,sourceMethod:'constructor'}]).search).toContain('not documented');
   expect(methodDescription([rows[0],rows[1]]).search).toContain('Multiple recorded');
 });
@@ -102,4 +102,23 @@ it('draws the default frontier behind points and recomputes it when toggled or t
  await userEvent.click(screen.getByRole('checkbox',{name:'Show Pareto frontier'}));expect(all().some((t:any)=>t.mode==='lines')).toBe(false);
  await userEvent.click(screen.getByRole('checkbox',{name:'Show Pareto frontier'}));expect(all()[0].mode).toBe('lines');
  await userEvent.selectOptions(screen.getByLabelText('Chart quality metric'),'faithfulness');expect(all().some((t:any)=>t.mode==='lines')).toBe(false);
+});
+
+it('orders controls and point numbers by correctness, shares ties, and keeps rank independent of the selected chart metric',async()=>{
+ const data=rows.map((r,i)=>({...r,scores:{...r.scores,answer_correctness:[.3,.8,.8,null][i],faithfulness:[.9,.1,.2,.7][i]}}));
+ mount(data);const legend=screen.getByRole('group',{name:'Chart methods'});const buttons=within(legend).getAllByRole('button');
+ expect(buttons.map(b=>b.getAttribute('aria-label'))).toEqual(['lume-agentic','lume-semantic-search','lume-bm25','lume-hybrid']);
+ expect(buttons.map(b=>b.querySelector('.chart-method-number')!.textContent)).toEqual(['1','1','3','—']);
+ expect(traces().map(t=>t.text)).toEqual([['3'],['1'],['1'],['—']]);const colors=traces().map(t=>t.marker.color);
+ await userEvent.selectOptions(screen.getByLabelText('Chart quality metric'),'faithfulness');expect(traces().map(t=>t.text)).toEqual([['3'],['1'],['1'],['—']]);expect(traces().map(t=>t.marker.color)).toEqual(colors);
+ await userEvent.click(within(legend).getByRole('button',{name:'lume-bm25'}));
+ const panel=screen.getByLabelText('Selected chart series');expect(panel.querySelector('.chart-method-number')!.textContent).toBe('3');expect(within(panel).getAllByRole('listitem')).toHaveLength(3);
+});
+
+it('recomputes accuracy rank from filtered rows without averaging across models or configurations',()=>{
+ const data=[{...rows[0],scores:{...rows[0].scores,answer_correctness:.4}},{...rows[1],scores:{...rows[1].scores,answer_correctness:.9}}];
+ const methods=data.map(r=>r.method);expect(accuracyOrder(methods,groupRows(data)).ranks.get(data[0].method)).toBe('2');
+ expect(accuracyOrder(methods,groupRows(data.slice(0,1))).ranks.get(data[0].method)).toBe('1');
+ for(const extra of [{model:'other-model'},{reasoning:'LOW'},{maxOutput:4096},{corpusHash:'different'}]){const ranked=accuracyOrder(methods,groupRows([data[0],{...data[1],...extra}]));expect(ranked.comparable).toBe(false);expect([...ranked.ranks.values()]).toEqual(['—','—']);}
+ const configs=accuracyOrder(methods,groupRows([...data,{...data[0],id:'config2',configuration:'other-config'}]));expect(configs.comparable).toBe(false);expect([...configs.ranks.values()]).toEqual(['—','—']);
 });

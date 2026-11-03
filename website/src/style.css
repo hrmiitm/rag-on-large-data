@@ -918,3 +918,9 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .corpus-summary small { color: var(--muted); }
 
 .heatmap th small { display:block; font-weight:400; color:var(--muted); font-size:12px; margin-top:4px; }
+
+.chart-rank-note { font-size:13px; line-height:1.6; color:var(--muted); margin:14px 0 0; }
+.chart-method-legend > button small { display:block; margin-top:3px; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.chart-technique h4 { margin:6px 0; font-size:15px; }
+.chart-technique ol { margin:10px 0 14px; padding-left:24px; }
+.chart-technique li { margin:8px 0; padding-left:3px; }
