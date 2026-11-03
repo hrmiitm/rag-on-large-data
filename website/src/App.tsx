@@ -85,6 +85,7 @@ export default function App(){
            {!filtered.length&&rows.length>0&&<p className="empty">No evaluations match this selection. Clear a filter to continue.</p>}
          </>}
          {page==='overview'&&<>
+           <Charts rows={filtered} categories={manifest.categories.filter(c=>!filters.categories.length||filters.categories.includes(c))} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} dark={dark} hover={hover} setHover={setHover} setFilters={setFilters} openEvaluations={openGroup}/>
            <section className="corpus-summary" aria-label="Corpus at a glance">
              <strong>Corpus at a glance</strong>
              <ul>
@@ -98,7 +99,6 @@ export default function App(){
            <ComparisonMatrix rows={filtered} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} hover={hover} setHover={setHover} onOpen={openGroup}/>
            <CategoryBreakdownTable rows={rows} categories={manifest.categories} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} manifest={manifest} questions={questions} onSelectCategory={(cat)=>{setFilters(f=>({...f,categories:[cat]}));navigate('questions');}}/>
            {pending>0&&complete===0&&<p className="pending-note">Judgments are pending for {pending} answers. Measured costs and response times are available.</p>}
-           <Charts rows={filtered} categories={manifest.categories.filter(c=>!filters.categories.length||filters.categories.includes(c))} methods={manifest.methods.filter(m=>!filters.methods.length||filters.methods.includes(m))} dark={dark} hover={hover} setHover={setHover} setFilters={setFilters} openEvaluations={openGroup}/>
            <details className="disclosure"><summary>Summary statistics and findings</summary>
              <section className="kpi-grid" aria-label="Filtered key performance indicators"><Kpi label="Answer correctness" value={percent(quality)} detail={`${complete} valid judged / ${filtered.length} evaluations`}/><Kpi label="Average serving cost" value={money(avgCost)} detail={`USD per evaluation · measured n=${costsN}`}/><Kpi label="Average answer latency" value={seconds(latency)} detail={`Answer ready · measured n=${latencyN}`}/><Kpi label="Evaluation coverage" value={`${generated} / ${filtered.length}`} detail={`${questionN} questions · ${pending} pending judgments`}/></section>
              <ul className="findings" aria-label="Data-derived findings">{findings.map((f,i)=><li key={i}><button className="text-button" onClick={()=>f.group?openGroup(f.group):navigate(i===0?'judge':'questions')}><b>{f.label}.</b> {f.text}</button></li>)}</ul>

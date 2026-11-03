@@ -5,18 +5,37 @@ const html=(value:string)=>value.replaceAll('&','&amp;').replaceAll('<','&lt;').
 const methodHover=(group:Group)=>`<b>${html(methodLabel(group.method))}</b> · ${html(shortModel(group.model))}<br>Configuration: ${html(group.configuration.slice(0,8))}`;
 export const usageMetrics:Record<string,string>={api_cost_usd:'Serving API cost (USD)',input_tokens:'Input tokens',output_tokens:'Output tokens',total_tokens:'Total tokens (input + output)',reasoning_tokens:'Reasoning tokens (included in output)',tool_calls:'Tool calls',llm_api_calls:'LLM API calls',db_queries:'Database queries',retrieval_time_ms:'Retrieval latency (ms)',llm_generation_time_ms:'Generation latency (ms)',retrieval_peak_rss_mb:'Peak retrieval memory (MiB)'};
 export function Panel({title,eyebrow,sub,children,action,className=''}:{title:string;eyebrow?:string;sub?:string;children:React.ReactNode;action?:React.ReactNode;className?:string}){return <section className={`panel ${className}`}><div className="panel-heading"><div>{eyebrow&&<span className="eyebrow">{eyebrow}</span>}<h2>{title}</h2>{sub&&<p>{sub}</p>}</div>{action}</div>{children}</section>;}
+// Frontier coordinates are the displayed averages, restricted to fully measured,
+// jointly judged question sets with identical generation settings and provenance.
+export function paretoFrontiers(groups:Group[],metric:string,x:'cost'|'medianLatency') {
+ const buckets=new Map<string,Group[]>();
+ for(const g of groups){
+   const first=g.rows[0];
+   if(!first?.corpusHash||!first.questionHash||g[x]===null||!g.rows.every(r=>r.judgeStatus==='completed'&&numeric(r.scores[metric])!==null&&numeric(x==='cost'?r.cost:r.latency)!==null))continue;
+   const settings=(r:Evaluation)=>JSON.stringify([r.model,r.reasoning,r.maxOutput,r.corpusHash,r.questionHash]);
+   if(!g.rows.every(r=>settings(r)===settings(first)))continue;
+   const key=JSON.stringify([settings(first),g.rows.map(r=>JSON.stringify([r.questionId,r.asOf])).sort()]);
+   if(!buckets.has(key))buckets.set(key,[]);
+   buckets.get(key)!.push(g);
+ }
+ return [...buckets.values()].map(bucket=>{
+   const nondominated=bucket.filter(g=>!bucket.some(other=>other[x]!<=g[x]!&&other.scores[metric]!>=g.scores[metric]!&&(other[x]!<g[x]!||other.scores[metric]!>g.scores[metric]!)));
+   const unique=new Map(nondominated.map(g=>[JSON.stringify([g[x],g.scores[metric]]),g]));
+   return [...unique.values()].sort((a,b)=>a[x]!-b[x]!);
+ }).filter(points=>points.length>1);
+}
 export default function Charts({rows,categories,methods,dark,hover,setHover,setFilters,openEvaluations}:{rows:Evaluation[];categories:string[];methods:string[];dark:boolean;hover:Hover;setHover:(v:Hover)=>void;setFilters:(updater:(f:Filters)=>Filters)=>void;openEvaluations:(g:Group)=>void}){
- const groups=useMemo(()=>groupRows(rows),[rows]),[log,setLog]=useState(false),[selectedKey,setSelectedKey]=useState<string|null>(null),[zoom,setZoom]=useState(0),[fit,setFit]=useState(true),[metric,setMetric]=useState('answer_correctness'),[usage,setUsage]=useState('api_cost_usd'),[sortGap,setSortGap]=useState(false),[view,setView]=useState('cost');
+ const groups=useMemo(()=>groupRows(rows),[rows]),[log,setLog]=useState(false),[frontier,setFrontier]=useState(true),[selectedKey,setSelectedKey]=useState<string|null>(null),[zoom,setZoom]=useState(0),[fit,setFit]=useState(true),[metric,setMetric]=useState('answer_correctness'),[usage,setUsage]=useState('api_cost_usd'),[sortGap,setSortGap]=useState(false),[view,setView]=useState('cost');
  const selected=groups.find(g=>g.key===selectedKey)??null;
  const chartColor=(method:string)=>chartPalette[Math.max(0,methods.indexOf(method))%chartPalette.length];
  const fade=(method:string,category?:string)=>hover&&((hover.method&&hover.method!==method)||(category&&hover.category&&hover.category!==category))?0.65:1;
  const qualityValues=groups.map(g=>g.scores[metric]).filter((v):v is number=>v!==null);
  const qualityRange: [number,number]|undefined=fit&&qualityValues.length?[Math.max(0,Math.floor(Math.min(...qualityValues)*10)*10-10),Math.min(105,Math.ceil(Math.max(...qualityValues)*10)*10+10)]:undefined;
  const scoreCount=(g:Group)=>g.rows.filter(r=>r.scores[metric]!==null).length;
- const series=(x:'cost'|'medianLatency')=>[...groups].sort((a,b)=>Number(a.key===selected?.key)-Number(b.key===selected?.key)).map(g=>({type:'scatter',mode:'markers+text',name:`${g.method} · ${shortModel(g.model)}`,
+ const series=(x:'cost'|'medianLatency')=>[...(frontier?paretoFrontiers(groups,metric,x).map((points,i)=>({type:'scatter',mode:'lines',name:`Pareto frontier ${i+1}`,x:points.map(g=>g[x]),y:points.map(g=>g.scores[metric]!*100),line:{color:dark?'#cbd5e1':'#475569',width:2,dash:'dot'},hoverinfo:'skip'})):[]),...[...groups].sort((a,b)=>Number(a.key===selected?.key)-Number(b.key===selected?.key)).map(g=>({type:'scatter',mode:'markers+text',name:`${g.method} · ${shortModel(g.model)}`,
    x:[g[x]],y:[g.scores[metric]===null?null:g.scores[metric]*100],text:[String(methods.indexOf(g.method)+1)],textposition:'middle center',textfont:{color:'#fff',size:12},
    marker:{color:chartColor(g.method),size:selected?.key===g.key?32:25,symbol:'circle',line:{width:selected?.key===g.key?3:1.5,color:dark?'#e2e8f0':'#172033'},opacity:selected&&selected.key!==g.key?0.65:fade(g.method)},customdata:[g.key],
-   hovertemplate:`${methodHover(g)}<br>${labels[metric]}: ${percent(g.scores[metric])} (n=${scoreCount(g)})<br>Average serving cost: ${money(g.cost)} (n=${g.costN})<br>Median answer-ready time: ${seconds(g.medianLatency)} (n=${g.latencyN})<br>Click to keep details below<extra></extra>`}));
+   hovertemplate:`${methodHover(g)}<br>${labels[metric]}: ${percent(g.scores[metric])} (n=${scoreCount(g)})<br>Average serving cost: ${money(g.cost)} (n=${g.costN})<br>Median answer-ready time: ${seconds(g.medianLatency)} (n=${g.latencyN})<br>Click to keep details below<extra></extra>`}))];
  const hasQuality=groups.some(g=>g.scores[metric]!==null), chartClick=(p:any)=>{const g=groups.find(g=>g.key===p.customdata);if(g)setSelectedKey(g.key);};
  const selectMethod=(method:string)=>{const g=groups.find(g=>g.method===method);setSelectedKey(selected?.method===method?null:g?.key??null);setHover(null);};
  const detail=selected&&methodDescription(selected.rows);
@@ -42,8 +61,8 @@ export default function Charts({rows,categories,methods,dark,hover,setHover,setF
    <div className="chart-view-control"><label>Chart <select aria-label="Chart view" value={view} onChange={e=>{setView(e.target.value);setHover(null);}}><option value="cost">Quality vs. cost</option><option value="latency">Quality vs. response time</option><option value="categories">Quality by category</option><option value="heatmap">Category heatmap</option><option value="usage">Resources</option></select></label></div>
    <Panel title={titles[view]} sub={descriptions[view]}>
      <MethodLegend methods={methods} selected={selected?.method??null} onSelect={selectMethod} chartColor={chartColor}/>
-     {(view==='cost'||view==='latency')&&<div className="chart-controls chart-scatter-controls"><label>Quality measure <select aria-label="Chart quality metric" value={metric} onChange={e=>setMetric(e.target.value)}>{Object.entries(labels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{view==='cost'&&<label>Cost scale <select aria-label="Cost axis" value={log?'log':'linear'} onChange={e=>setLog(e.target.value==='log')}><option value="linear">Linear</option><option value="log">Logarithmic</option></select></label>}<label>Quality range <select aria-label="Quality axis range" value={fit?'fit':'full'} onChange={e=>setFit(e.target.value==='fit')}><option value="fit">Fit to data</option><option value="full">Full · 0–100%</option></select></label><button onClick={()=>setZoom(z=>z+1)}>Reset zoom</button></div>}
-     {(view==='cost'||view==='latency')&&<p className="chart-reading-note">Each point is a separate method / model / configuration. Numbers match the methods above; select a method to reveal its settings. Quality range is {fit?'fitted to the current data':'0–100%'}. Nearby points can overlap; use the method buttons to select them. Unscored or unmeasured series remain in Exact values.</p>}
+     {(view==='cost'||view==='latency')&&<div className="chart-controls chart-scatter-controls"><label>Quality measure <select aria-label="Chart quality metric" value={metric} onChange={e=>setMetric(e.target.value)}>{Object.entries(labels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{view==='cost'&&<label>Cost scale <select aria-label="Cost axis" value={log?'log':'linear'} onChange={e=>setLog(e.target.value==='log')}><option value="linear">Linear</option><option value="log">Logarithmic</option></select></label>}<label>Quality range <select aria-label="Quality axis range" value={fit?'fit':'full'} onChange={e=>setFit(e.target.value==='fit')}><option value="fit">Fit to data</option><option value="full">Full · 0–100%</option></select></label><label className="check"><input type="checkbox" checked={frontier} onChange={e=>setFrontier(e.target.checked)}/> Show Pareto frontier</label><button onClick={()=>setZoom(z=>z+1)}>Reset zoom</button></div>}
+     {(view==='cost'||view==='latency')&&<p className="chart-reading-note">Each point is a separate method / model / configuration. Numbers match the methods above; select a method to reveal its settings. Quality range is {fit?'fitted to the current data':'0–100%'}. Nearby points can overlap; use the method buttons to select them. Unscored or unmeasured series remain in Exact values.{frontier&&<> Dotted Pareto lines connect non-dominated points only within matching model/settings, corpus and fully judged/measured question sets; at least two frontier points are required.</>}</p>}
      {view==='cost'&&<>
        <Plot key={view} data={series('cost')} revision={`cost-${log}-${metric}-${fit}-${zoom}`} yRange={qualityRange} yTitle={`Mean ${labels[metric].toLowerCase()} (%)`} dark={dark} log={log} height={450} xTitle="Average serving API cost per answer (USD)" xFormat="$,.3f" empty={hasQuality?undefined:'No completed judgments for this selection.'} onClick={chartClick} onHover={p=>{const g=groups.find(g=>g.key===p.customdata);if(g)setHover({method:g.method});}} onLeave={()=>setHover(null)}/>
      </>}

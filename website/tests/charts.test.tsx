@@ -4,12 +4,13 @@ import {cleanup,render,screen,within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fs from 'node:fs';
 import path from 'node:path';
-import Charts from '../src/Charts';
+import Charts,{paretoFrontiers} from '../src/Charts';
+import {groupRows} from '../src/data.mjs';
 import {methodDescription} from '../src/MethodLegend';
 import {normalize} from '../scripts/normalize.mjs';
 import type {Evaluation} from '../src/types';
 
-vi.mock('../src/Plot',()=>({default:({data,onClick}:any)=><div data-testid="chart-series">{data.filter((t:any)=>t.customdata).map((trace:any,i:number)=><button key={i} data-trace={JSON.stringify(trace)} onClick={()=>onClick?.({customdata:trace.customdata[0]})}>{trace.name??i}</button>)}</div>}));
+vi.mock('../src/Plot',()=>({default:({data,onClick}:any)=><div data-testid="chart-series" data-series={JSON.stringify(data)}>{data.filter((t:any)=>t.customdata).map((trace:any,i:number)=><button key={i} data-trace={JSON.stringify(trace)} onClick={()=>onClick?.({customdata:trace.customdata[0]})}>{trace.name??i}</button>)}</div>}));
 const seed=normalize(JSON.parse(fs.readFileSync(path.resolve('tests/fixtures/presentation-record.json'),'utf8')),'q-a-eval-fixture.jsonl')[0] as Evaluation;
 const rows=['bm25','agentic','semantic-search','hybrid'].map((sourceMethod,i)=>({...seed,id:String(i),method:`lume-${sourceMethod}`,sourceMethod,judgeStatus:'completed',scores:{...seed.scores,answer_correctness:.8},cost:.01+i*.01,latency:5+i}));
 function mount(data:Evaluation[]=rows){const open=vi.fn(),hover=vi.fn(),filters=vi.fn();render(<Charts rows={data} methods={[...new Set(data.map(r=>r.method))]} categories={[seed.category]} dark={false} hover={null} setHover={hover} setFilters={filters} openEvaluations={open}/>);return {open,hover,filters};}
@@ -22,7 +23,7 @@ it('uses numbered, distinct method controls and concise scatter hovers without o
   expect(screen.queryByRole('tooltip')).toBeNull();
   expect(new Set(traces().map(t=>t.marker.color)).size).toBe(4);
   for(const [i,trace] of traces().entries()){expect(trace.mode).toBe('markers+text');expect(trace.text).toEqual([String(i+1)]);expect(trace.hovertemplate).toContain('Configuration:');expect(trace.hovertemplate).not.toContain('LLM receives:');}
-  expect(screen.getByLabelText('Cost axis')).toHaveProperty('value','linear');
+  expect(screen.getByLabelText('Cost axis')).toHaveProperty('value','linear');expect(screen.getByRole('checkbox',{name:'Show Pareto frontier'})).toHaveProperty('checked',true);await userEvent.click(screen.getByRole('checkbox',{name:'Show Pareto frontier'}));expect(screen.getByRole('checkbox',{name:'Show Pareto frontier'})).toHaveProperty('checked',false);
   await userEvent.selectOptions(screen.getByLabelText('Chart view'),'latency');
   expect(traces()).toHaveLength(4);expect(screen.getByLabelText('Chart quality metric')).toBeTruthy();
 });
@@ -86,4 +87,19 @@ it('keeps heatmap configurations separate and drills down with the exact model a
   const cells=screen.getAllByRole('button',{name:`Filter ${seed.category.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())} and lume-bm25`});
   expect(cells).toHaveLength(2);expect(cells[0].textContent).toContain('80.0%');expect(cells[1].textContent).toContain('40.0%');
   await userEvent.click(cells[1]);expect(filters.mock.calls.at(-1)![0]({})).toEqual(expect.objectContaining({methods:['lume-bm25'],models:[other.model],configs:[other.configuration]}));
+});
+
+it('computes frontiers with tied costs, dominated points, missing data and incompatible settings kept separate',()=>{
+ const point=(i:number,cost:number,score:number,extra:Partial<Evaluation>={})=>({...rows[0],id:String(i),method:`m${i}`,cost,latency:cost*100,scores:{...rows[0].scores,answer_correctness:score},...extra});
+ const fixture=[point(1,.01,.5),point(2,.01,.6),point(3,.02,.55),point(4,.03,.8),point(5,.03,.8),point(6,.001,1,{model:'other-model'}),point(7,.001,1,{questionId:'other-question'}),point(8,.001,1,{corpusHash:null}),point(9,.001,1,{reasoning:'LOW'}),point(10,.001,1,{judgeStatus:'pending'}),point(11,.001,1,{cost:null})];
+ for(const x of ['cost','medianLatency'] as const){const groups=groupRows(fixture.filter(r=>x==='cost'||r.cost!==null));const result=paretoFrontiers(groups,'answer_correctness',x);expect(result).toHaveLength(1);expect(result[0].map(g=>[g.cost,g.scores.answer_correctness])).toEqual([[.01,.6],[.03,.8]]);}
+});
+
+it('draws the default frontier behind points and recomputes it when toggled or the quality metric changes',async()=>{
+ mount([{...rows[0],scores:{...rows[0].scores,answer_correctness:.6,faithfulness:.8}},{...rows[1],scores:{...rows[1].scores,answer_correctness:.8,faithfulness:.6}}]);
+ const all=()=>JSON.parse(screen.getByTestId('chart-series').getAttribute('data-series')!);
+ expect(all()[0]).toEqual(expect.objectContaining({mode:'lines',x:[.01,.02],y:[60,80],hoverinfo:'skip'}));
+ await userEvent.click(screen.getByRole('checkbox',{name:'Show Pareto frontier'}));expect(all().some((t:any)=>t.mode==='lines')).toBe(false);
+ await userEvent.click(screen.getByRole('checkbox',{name:'Show Pareto frontier'}));expect(all()[0].mode).toBe('lines');
+ await userEvent.selectOptions(screen.getByLabelText('Chart quality metric'),'faithfulness');expect(all().some((t:any)=>t.mode==='lines')).toBe(false);
 });
