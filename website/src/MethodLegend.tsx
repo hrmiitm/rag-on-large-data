@@ -2,6 +2,17 @@ import type {Evaluation,Group} from './types';
 import {money,percent,seconds} from './format';
 import {groupRows,matchedComparison,mean,numeric} from './data.mjs';
 
+function methodComparisons(rows:Evaluation[],comparisonRows:Evaluation[]):string[] {
+ const selected=groupRows(rows),observations:string[]=[];
+ if(selected.length!==1)return observations;
+ for(const other of groupRows(comparisonRows).filter(g=>g.method!==selected[0].method&&['bm25','agentic','elasticsearch-agentic'].includes(g.rows[0].sourceMethod))) {
+  const matched=matchedComparison([selected[0],other]);if(!matched.n)continue;
+  const [a,b]=matched.groups;
+  observations.push(`${matched.n} matched questions vs. ${methodLabel(b.method)} (${b.configuration.slice(0,8)}): correctness ${percent(a.scores.answer_correctness)} vs. ${percent(b.scores.answer_correctness)}; average answer time ${seconds(a.latency)} vs. ${seconds(b.latency)}; serving cost ${money(a.cost)} vs. ${money(b.cost)} per answer.`);
+ }
+ return observations;
+}
+
 // Descriptions follow recorded adapter identities, never guesses from filenames.
 // Discovery remains data-driven; unfamiliar adapters get an explicit fallback.
 export function methodDescription(rows:Evaluation[],comparisonRows:Evaluation[]=[]):{search:string;sent:string;steps?:string[];comparison?:string;performance?:string;observations?:string[]} {
@@ -21,15 +32,7 @@ export function methodDescription(rows:Evaluation[],comparisonRows:Evaluation[]=
   if(!rows.length)return {search:'No evaluations for the current filters.',sent:'No supplied context in this selection.'};
   if(sources.length!==1)return {search:'Multiple recorded retrieval techniques in this selection.',sent:'Context stays separate for each model and configuration.'};
   if(sources[0]==='elasticsearch-agentic') {
-    const observations:string[]=[];
-    // Compare individual common questions, keeping settings/configurations separate.
-    const selected=groupRows(rows);
-    if(selected.length===1)for(const other of groupRows(comparisonRows).filter((g:Group)=>g.method!==selected[0].method&&['bm25','agentic'].includes(g.rows[0].sourceMethod))) {
-      const matched=matchedComparison([selected[0],other]);
-      if(!matched.n)continue;
-      const [a,b]=matched.groups as Group[];
-      observations.push(`${matched.n} matched questions vs. ${methodLabel(b.method)} (${b.configuration.slice(0,8)}): correctness ${percent(a.scores.answer_correctness)} vs. ${percent(b.scores.answer_correctness)}; average answer time ${seconds(a.latency)} vs. ${seconds(b.latency)}; serving cost ${money(a.cost)} vs. ${money(b.cost)} per answer.`);
-    }
+    const observations=methodComparisons(rows,comparisonRows);
     const retrieval=mean(rows.map(r=>numeric(r.metrics.retrieval_time_ms))),latency=mean(rows.map(r=>r.latency));
     return {
       search:'An LLM researches SEC filings using Elasticsearch: keyword search plus meaning-based search over the existing passage embeddings.',
@@ -44,7 +47,22 @@ export function methodDescription(rows:Evaluation[],comparisonRows:Evaluation[]=
       observations,
     };
   }
-  if(Object.hasOwn(profiles,sources[0]))return profiles[sources[0]];
+  if(Object.hasOwn(profiles,sources[0])) {
+    const notes:Record<string,{comparison:string;cost:string}>={
+      bm25:{comparison:'This is keyword-only retrieval, followed by one answering LLM call. It has no semantic vector search, query-planning agent or reranker. Exact names and financial terms help; different wording can hide useful passages.',cost:'Serving spend is mainly the final answering LLM and its evidence tokens. Local keyword search has no embedding or reranking API charge.'},
+      agentic:{comparison:'It builds on BM25: the LLM can decompose the question and search again. Unlike Elasticsearch agentic search, its tools use lexical retrieval without vector fusion or neighbouring-passage reads. More searches can fill evidence gaps but can also exhaust the turn budget.',cost:'Multiple LLM turns and repeated evidence tokens add serving cost and waiting time. Native shards load sequentially; batched searches share that work. No embedding or reranking API is used.'},
+      'semantic-search':{comparison:'It uses exact cosine similarity over all candidate vectors, with no keyword score. This can find similar meanings but can miss exact company names or numbers. Unlike Elasticsearch’s approximate lookup, the Lume baseline scans vectors exactly.',cost:'Local exact vector scans and shard loading take time. Document vectors and the original question cache are reused; cache setup is separate from per-answer serving cost. The answering LLM receives one retrieved context.'},
+      hybrid:{comparison:'This combines BM25 and cosine scores using multiplicative fusion. RRF instead combines independent result ranks. There is no iterative LLM search or cross-encoder reranker; stronger keyword matches still influence the blend.',cost:'Both lexical and exact vector retrieval run locally, using saved embeddings. Serving API spend is mainly one answering LLM call and its context; local scans and shard loading still contribute latency.'},
+      'hybrid-rerank':{comparison:'This adds a cross-encoder to the multiplicative hybrid candidate search. The reranker reads each question/passage pair more closely, but it cannot recover relevant evidence missing from the candidate list. It is a general MS MARCO MiniLM model, not a finance-specific judge.',cost:'Local CPU reranking and passage windows add time and RAM, with no reranking API charge. Existing vectors are reused. The final LLM receives ten selected passages rather than all candidates.'},
+      'semantic-rerank':{comparison:'This adds a cross-encoder to exact semantic retrieval. There is no BM25 branch; unlike hybrid reranking, candidate discovery depends only on meaning-based matches. Better ordering does not guarantee better financial answers.',cost:'Exact vector scans and local CPU reranking add latency. There is no reranking API charge, and saved document/question vectors are reused. API spend is mainly the final answer and its context.'},
+      rrf:{comparison:'This combines independent BM25 and exact cosine rankings with RRF. Unlike multiplicative hybrid, it uses rank votes rather than raw-score magnitudes. It is a fixed retrieval pass, with no LLM-directed follow-up search or cross-encoder.',cost:'Two local candidate lists and exact vector scans contribute retrieval time. Saved vectors are reused; the answering LLM is the main serving API cost. Fusion itself has no API charge.'},
+      'rrf-rerank':{comparison:'This adds a cross-encoder after BM25/cosine RRF. Rank fusion finds candidates; the reranker decides the final order. Unlike plain RRF, it reads question/passage pairs, but there is still no agent loop.',cost:'The two searches plus local CPU reranking add time. Reranking has no API charge; serving spend mainly covers the final answering LLM and its selected evidence.'},
+      hyde:{comparison:'Unlike ordinary semantic search, HyDE embeds an LLM-written hypothetical passage instead of only the question. This can bridge vocabulary gaps, but invented assumptions can steer retrieval away from the right filing. Only real SEC passages support the final answer.',cost:'A hypothesis-generation LLM call and its query embedding add serving overhead before the final answering call. Existing document embeddings are reused. Hypothesis preparation costs and time belong to this method’s recorded serving metrics.'},
+      'self-reflective-rag':{comparison:'This extends hybrid RAG with an LLM review of its draft and at most one extra search/revision. It is a bounded prompt workflow, not a separately trained Self-RAG model or an open-ended search agent. Review can spot missing support but can also accept an incorrect draft.',cost:'Drafting, review and optional revision add LLM calls and repeated context tokens. Reused embeddings avoid a new document embedding pass. The recorded latency and serving spend include these stages.'},
+    };
+    const note=notes[sources[0]],retrieval=mean(rows.map(r=>numeric(r.metrics.retrieval_time_ms))),latency=mean(rows.map(r=>r.latency)),cost=mean(rows.map(r=>r.cost));
+    return {...profiles[sources[0]],comparison:note.comparison,performance:`${note.cost} Recorded averages for the current filters: local retrieval ${seconds(retrieval===null?null:retrieval/1000)} per question; answer-ready time ${seconds(latency)}; serving API cost ${money(cost)} per answer. Each average uses its available measurements. Judging is separate and excluded from serving cost. These are observed pipeline results, not an isolated causal test.`,observations:methodComparisons(rows,comparisonRows)};
+  }
   const retrievers=[...new Set(rows.flatMap(r=>r.retrievalProfile?.retriever?[r.retrievalProfile.retriever]:[]))];
   const modes=[...new Set(rows.flatMap(r=>r.retrievalProfile?.modes??[]))];
   const signals=[...new Set(rows.flatMap(r=>r.retrievalProfile?.signals??[]))];

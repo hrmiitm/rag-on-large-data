@@ -4,13 +4,13 @@ import {cleanup,render,screen,within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fs from 'node:fs';
 import path from 'node:path';
-import Charts,{paretoFrontiers} from '../src/Charts';
+import Charts,{paretoFrontiers,paretoDominators,pointLabelText} from '../src/Charts';
 import {groupRows} from '../src/data.mjs';
 import {methodDescription,accuracyOrder,methodColor} from '../src/MethodLegend';
 import {normalize} from '../scripts/normalize.mjs';
 import type {Evaluation} from '../src/types';
 
-vi.mock('../src/Plot',()=>({default:({data,onClick,log,revision}:any)=><div data-testid="chart-series" data-log={String(log)} data-revision={revision} data-series={JSON.stringify(data)}>{data.filter((t:any)=>t.customdata).map((trace:any,i:number)=><button key={i} data-trace={JSON.stringify(trace)} onClick={()=>onClick?.({customdata:trace.customdata[0]})}>{trace.name??i}</button>)}</div>}));
+vi.mock('../src/Plot',()=>({default:({data,onClick,log,revision,pointLabels}:any)=><div data-testid="chart-series" data-labels={JSON.stringify(pointLabels)} data-log={String(log)} data-revision={revision} data-series={JSON.stringify(data)}>{data.filter((t:any)=>t.customdata).map((trace:any,i:number)=><button key={i} data-trace={JSON.stringify(trace)} onClick={()=>onClick?.({customdata:trace.customdata[0]})}>{trace.name??i}</button>)}</div>}));
 const seed=normalize(JSON.parse(fs.readFileSync(path.resolve('tests/fixtures/presentation-record.json'),'utf8')),'q-a-eval-fixture.jsonl')[0] as Evaluation;
 const rows=['bm25','agentic','semantic-search','hybrid'].map((sourceMethod,i)=>({...seed,id:String(i),method:`lume-${sourceMethod}`,sourceMethod,judgeStatus:'completed',scores:{...seed.scores,answer_correctness:.8},cost:.01+i*.01,latency:5+i}));
 function mount(data:Evaluation[]=rows){const open=vi.fn(),hover=vi.fn(),filters=vi.fn();render(<Charts rows={data} methods={[...new Set(data.map(r=>r.method))]} categories={[seed.category]} dark={false} hover={null} setHover={hover} setFilters={filters} openEvaluations={open}/>);return {open,hover,filters};}
@@ -98,7 +98,7 @@ it('computes frontiers with tied costs, dominated points, missing data and incom
 it('draws the default frontier behind points and recomputes it when toggled or the quality metric changes',async()=>{
  mount([{...rows[0],scores:{...rows[0].scores,answer_correctness:.6,faithfulness:.8}},{...rows[1],scores:{...rows[1].scores,answer_correctness:.8,faithfulness:.6}}]);
  const all=()=>JSON.parse(screen.getByTestId('chart-series').getAttribute('data-series')!);
- expect(all()[0]).toEqual(expect.objectContaining({mode:'lines',x:[.01,.02],y:[60,80],hoverinfo:'skip',line:expect.objectContaining({shape:'hv',simplify:false})}));
+ expect(all()[0]).toEqual(expect.objectContaining({mode:'lines',x:[.01,.02],y:[60,80],hoverinfo:'skip',line:expect.objectContaining({shape:'linear',simplify:false})}));
  await userEvent.click(screen.getByRole('checkbox',{name:'Show Pareto frontier'}));expect(all().some((t:any)=>t.mode==='lines')).toBe(false);
  await userEvent.click(screen.getByRole('checkbox',{name:'Show Pareto frontier'}));expect(all()[0].mode).toBe('lines');
  await userEvent.selectOptions(screen.getByLabelText('Chart quality metric'),'faithfulness');expect(all().some((t:any)=>t.mode==='lines')).toBe(false);
@@ -112,7 +112,7 @@ it('orders controls and point numbers by correctness, shares ties, and keeps ran
  expect(traces().map(t=>t.text)).toEqual([['3'],['1'],['1'],['—']]);const colors=traces().map(t=>t.marker.color);
  await userEvent.selectOptions(screen.getByLabelText('Chart quality metric'),'faithfulness');expect(traces().map(t=>t.text)).toEqual([['3'],['1'],['1'],['—']]);expect(traces().map(t=>t.marker.color)).toEqual(colors);
  await userEvent.click(within(legend).getByRole('button',{name:'lume-bm25'}));
- const panel=screen.getByLabelText('Selected chart series');expect(panel.querySelector('.chart-method-number')!.textContent).toBe('3');expect(within(panel).getAllByRole('listitem')).toHaveLength(3);
+ const panel=screen.getByLabelText('Selected chart series');expect(panel.querySelector('.chart-method-number')!.textContent).toBe('3');expect(within(panel).getAllByRole('listitem').length).toBeGreaterThan(3);expect(panel.querySelectorAll('.chart-technique strong').length).toBeGreaterThan(0);
 });
 
 it('recomputes accuracy rank from filtered rows without averaging across models or configurations',()=>{
@@ -131,7 +131,7 @@ it('uses discovered filenames for Elasticsearch and future frontier membership, 
  const {rerender}=render(<Charts {...props} rows={[baseline,elastic]}/>);
  const all=()=>JSON.parse(screen.getByTestId('chart-series').getAttribute('data-series')!);
  expect(screen.getByTestId('chart-series').getAttribute('data-log')).toBe('true');
- expect(all()[0].x).toEqual([.01,.03]);expect(all()[0].line.shape).toBe('hv');
+ expect(all()[0].x).toEqual([.01,.03]);expect(all()[0].line.shape).toBe('linear');
  expect(screen.getByLabelText('Pareto frontier methods').textContent).toContain('elasticsearch');
  const revision=screen.getByTestId('chart-series').getAttribute('data-revision');
  rerender(<Charts {...props} rows={[baseline,elastic,future]}/>);
@@ -200,4 +200,28 @@ it('explains Elasticsearch simply and computes comparison text from matched filt
  expect(description.comparison).toContain('no cross-encoder');expect(description.performance).toContain('1.00 s per question');expect(description.performance).toContain('judging is separate');
  expect(description.observations).toHaveLength(1);expect(description.observations![0]).toContain('1 matched questions');expect(description.observations![0]).toContain('90.0% vs. 50.0%');expect(description.observations![0]).toContain('20.00 s vs. 10.00 s');expect(description.observations![0]).toContain('$0.0300 vs. $0.0100');
  const filtered=methodDescription([elastic],[{...baseline,reasoning:'LOW'}]);expect(filtered.observations).toHaveLength(0);
+});
+
+it('labels points with correctness, two-decimal cost and mean milliseconds outside the ranked markers',async()=>{
+ const row={...rows[0],cost:.0381595575,latency:47.0984846,scores:{...seed.scores,answer_correctness:.9018,faithfulness:.7}};
+ mount([row]);let label=JSON.parse(screen.getByTestId('chart-series').getAttribute('data-labels')!)[0];
+ expect(label.text).toBe('90.2% · $0.04<br>47,098 ms');expect(traces()[0].textposition).toBe('middle center');expect(pointLabelText(groupRows([{...row,cost:null,latency:null}])[0])).toBe('90.2% · N/A<br>N/A');
+ await userEvent.selectOptions(screen.getByLabelText('Chart quality metric'),'faithfulness');label=JSON.parse(screen.getByTestId('chart-series').getAttribute('data-labels')!)[0];expect(label.y).toBe(70);expect(label.text).toBe('90.2% · $0.04<br>47,098 ms');
+});
+
+it('explains a dominated runner-up instead of incorrectly connecting it to the frontier',async()=>{
+ const best={...rows[0],method:'better',cost:.03,scores:{...seed.scores,answer_correctness:.9}},second={...rows[1],method:'second',cost:.04,scores:{...seed.scores,answer_correctness:.8}};
+ mount([best,second]);expect(paretoDominators(groupRows([best,second]),groupRows([second])[0],'answer_correctness','cost').map(g=>g.method)).toEqual(['better']);
+ await userEvent.click(screen.getByRole('button',{name:'second',exact:true}));expect(screen.getByLabelText('Selected chart series').textContent).toContain('Outside the Pareto frontier');expect(screen.getByLabelText('Selected chart series').textContent).toContain('90.0%');
+ expect(screen.getByLabelText('Pareto frontier methods').textContent).not.toContain('second');
+ const incompatible={...best,reasoning:'LOW'};expect(paretoDominators(groupRows([incompatible,second]),groupRows([second])[0],'answer_correctness','cost')).toHaveLength(0);
+});
+
+it('gives every recorded technique bulleted, highlighted explanations and measured speed/cost context',async()=>{
+ const sources=['bm25','agentic','semantic-search','hybrid','hybrid-rerank','semantic-rerank','rrf','rrf-rerank','hyde','self-reflective-rag','elasticsearch-agentic'];
+ for(const sourceMethod of sources){
+  const data=[{...rows[0],method:'technique',sourceMethod}];mount(data);await userEvent.click(screen.getByRole('button',{name:'technique',exact:true}));
+  const panel=screen.getByLabelText('Selected chart series');expect(within(panel).getByRole('heading',{name:'Compared with other methods'})).toBeTruthy();expect(within(panel).getByRole('heading',{name:'Speed, quality and cost'})).toBeTruthy();
+  expect(panel.querySelectorAll('.chart-technique li').length).toBeGreaterThan(6);expect(panel.querySelectorAll('.chart-technique strong').length).toBeGreaterThan(2);expect(panel.querySelector('.chart-technique p')).toBeNull();cleanup();
+ }
 });

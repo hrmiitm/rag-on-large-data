@@ -929,3 +929,10 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .chart-frontiers p { margin:6px 0; }
 .chart-frontiers small { color:var(--muted); }
 .frontier-method { border:0; border-radius:0; padding:0; background:transparent; color:var(--accent); text-decoration:underline; text-underline-offset:3px; font:inherit; }
+
+.chart-technique ul { margin:8px 0 16px; padding-left:23px; }
+.chart-technique li { margin:6px 0; }
+.chart-technique strong { font-weight:650; }
+.chart-technique details { margin-top:12px; }
+.chart-technique details small { color:var(--muted); }
+.chart-pareto-reason { font-size:13px; line-height:1.6; padding:10px 12px; border-left:3px solid var(--accent); background:var(--surface); }

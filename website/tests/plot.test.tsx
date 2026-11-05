@@ -1,5 +1,5 @@
 import React from 'react';import {afterEach,expect,it,vi} from 'vitest';import {cleanup,render,screen,waitFor} from '@testing-library/react';import userEvent from '@testing-library/user-event';import Plot from '../src/Plot';
-const mock=vi.hoisted(()=>({react:vi.fn(async(node:any)=>{node.handlers={};node.on=(event:string,fn:any)=>{node.handlers[event]=fn;};node.removeAllListeners=(event:string)=>{delete node.handlers[event];};}),downloadImage:vi.fn(),purge:vi.fn(),Plots:{resize:vi.fn()}}));
+const mock=vi.hoisted(()=>({react:vi.fn(async(node:any)=>{node.handlers={};node.on=(event:string,fn:any)=>{node.handlers[event]=fn;};node.removeAllListeners=(event:string)=>{delete node.handlers[event];};}),downloadImage:vi.fn(),relayout:vi.fn(async()=>{}),purge:vi.fn(),Plots:{resize:vi.fn()}}));
 vi.mock('plotly.js-basic-dist-min',()=>({default:mock}));
 afterEach(()=>{cleanup();vi.clearAllMocks();});
 it('Plotly adapter preserves categorical axes instead of coercing them to numeric axes',async()=>{render(<Plot data={[{type:'bar',x:['Disclosure Lookup'],y:[80]}]} xTitle="Question category"/>);await waitFor(()=>expect(mock.react).toHaveBeenCalled());const layout=mock.react.mock.calls.at(-1)![2] as any;expect(layout.xaxis.type).toBeUndefined();expect(layout.yaxis.range).toEqual([0,105]);expect(layout.uirevision).toBe('chart');});
@@ -7,3 +7,10 @@ it('Plotly adapter supports logarithmic cost axes, zoom/reset and both image exp
 it('Plotly adapter forwards hover, unhover and click data without committing filters itself',async()=>{const click=vi.fn(),hover=vi.fn(),leave=vi.fn();render(<Plot data={[{type:'scatter',x:[.01],y:[80]}]} xTitle="Cost" onClick={click} onHover={hover} onLeave={leave}/>);await waitFor(()=>expect(mock.react).toHaveBeenCalled());const el=screen.getByRole('img') as any;await waitFor(()=>expect(el.handlers.plotly_click).toBeTruthy());el.handlers.plotly_hover({points:[{customdata:'method-a'}]});el.handlers.plotly_unhover();el.handlers.plotly_click({points:[{customdata:'method-a'}]});expect(hover).toHaveBeenCalledWith({customdata:'method-a'});expect(leave).toHaveBeenCalledOnce();expect(click).toHaveBeenCalledWith({customdata:'method-a'});});
 
 it('formats currency axes and honors fitted quality ranges and explicit reset revisions',async()=>{render(<Plot data={[{type:'scatter',x:[.01],y:[80]}]} xTitle="Cost" xFormat="$,.3f" yRange={[40,90]} revision="cost-fit-1"/>);await waitFor(()=>expect(mock.react).toHaveBeenCalled());const layout=mock.react.mock.calls.at(-1)![2] as any;expect(layout.xaxis.tickformat).toBe('$,.3f');expect(layout.yaxis.range).toEqual([40,90]);expect(layout.uirevision).toBe('cost-fit-1');});
+
+it('draws small external value annotations on log axes and repositions them after zoom',async()=>{
+ render(<Plot data={[{type:'scatter',x:[.01],y:[80]}]} xTitle="Cost" log pointLabels={[{key:'one',x:.01,y:80,text:'80.0% · $0.01<br>12,345 ms'}]}/>);
+ await waitFor(()=>expect(mock.react).toHaveBeenCalled());const layout=mock.react.mock.calls.at(-1)![2] as any;
+ expect(layout.annotations).toHaveLength(1);expect(layout.annotations[0]).toEqual(expect.objectContaining({x:-2,y:80,text:'80.0% · $0.01<br>12,345 ms',font:expect.objectContaining({size:10.5}),standoff:17}));
+ const node=screen.getByRole('img') as any;await waitFor(()=>expect(node.handlers.plotly_relayout).toBeTruthy());node.handlers.plotly_relayout({'xaxis.range[0]':-2.1,'xaxis.range[1]':-1.9});expect(mock.relayout).toHaveBeenCalled();
+});
