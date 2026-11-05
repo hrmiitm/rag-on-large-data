@@ -1,7 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+import {normalize} from '../scripts/normalize.mjs';
 import {labelXRange,placePointLabels} from '../src/point-labels.mjs';import {groupRows} from '../src/data.mjs';
-const base=new URL('../public/data/',import.meta.url),manifest=JSON.parse(fs.readFileSync(new URL('manifest.json',base))),{rows}=JSON.parse(fs.readFileSync(new URL(manifest.data,base)));
-const points=groupRows(rows).map(g=>({key:g.key,x:g.cost,y:g.scores.answer_correctness*100,text:`${(g.scores.answer_correctness*100).toFixed(1)}% · $${g.cost.toFixed(2)}<br>${Math.round(g.latency*1000).toLocaleString('en-US')} ms`}));
+// npm test runs before data generation in a fresh CI checkout.
+const folder=new URL('../../judge/final-results/',import.meta.url);
+const rows=fs.readdirSync(folder).filter(f=>f.endsWith('.jsonl')).sort().flatMap(f=>fs.readFileSync(new URL(f,folder),'utf8').split('\n').filter(Boolean).flatMap(line=>normalize(JSON.parse(line),f)));
+const points=groupRows(rows).filter(g=>g.cost!==null&&g.cost>0&&g.scores.answer_correctness!==null).map(g=>({key:g.key,x:g.cost,y:g.scores.answer_correctness*100,text:`${(g.scores.answer_correctness*100).toFixed(1)}% · $${g.cost.toFixed(2)}<br>${Math.round(g.latency*1000).toLocaleString('en-US')} ms`}));
 const overlap=(a,b)=>Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top);
 test('live clustered labels stay within the plot without covering labels or circles at multiple widths',()=>{
  for(const log of [true,false])for(const width of [280,420,800,1050]){
