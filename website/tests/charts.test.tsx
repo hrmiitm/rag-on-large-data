@@ -225,3 +225,18 @@ it('gives every recorded technique bulleted, highlighted explanations and measur
   expect(panel.querySelectorAll('.chart-technique li').length).toBeGreaterThan(6);expect(panel.querySelectorAll('.chart-technique strong').length).toBeGreaterThan(2);expect(panel.querySelector('.chart-technique p')).toBeNull();cleanup();
  }
 });
+
+it('shows all point-label fields by default and lets users hide labels or choose individual fields',async()=>{
+ const row={...rows[0],cost:.038,latency:47.1,scores:{...seed.scores,answer_correctness:.9018}};
+ mount([row]);const labels=()=>JSON.parse(screen.getByTestId('chart-series').getAttribute('data-labels')!);
+ const master=screen.getByRole('checkbox',{name:'Show labels'}),quality=screen.getByRole('checkbox',{name:'Correctness',exact:true}),cost=screen.getByRole('checkbox',{name:'Cost',exact:true}),latency=screen.getByRole('checkbox',{name:'Latency',exact:true});
+ for(const control of [master,quality,cost,latency])expect(control).toHaveProperty('checked',true);
+ expect(labels()[0].text).toBe('90.2% · $0.04<br>47sec');
+ await userEvent.click(cost);expect(labels()[0].text).toBe('90.2%<br>47sec');
+ await userEvent.click(quality);expect(labels()[0].text).toBe('47sec');
+ await userEvent.click(latency);expect(labels()[0].text).toBe('');
+ await userEvent.click(cost);expect(labels()[0].text).toBe('$0.04');
+ await userEvent.click(master);expect(labels()[0].text).toBe('');expect(cost).toHaveProperty('disabled',true);expect(traces()[0].text).toEqual(['1']);
+ await userEvent.click(master);expect(cost).toHaveProperty('checked',true);expect(quality).toHaveProperty('checked',false);expect(labels()[0].text).toBe('$0.04');
+ await userEvent.selectOptions(screen.getByLabelText('Chart view'),'latency');expect(labels()[0].text).toBe('$0.04');
+});

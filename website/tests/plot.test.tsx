@@ -14,3 +14,12 @@ it('draws small external value annotations on log axes and repositions them afte
  expect(layout.annotations).toHaveLength(1);expect(layout.annotations[0]).toEqual(expect.objectContaining({x:-2,y:80,text:'80.0% · $0.01<br>12sec',font:expect.objectContaining({size:10.5}),standoff:17}));
  const node=screen.getByRole('img') as any;await waitFor(()=>expect(node.handlers.plotly_relayout).toBeTruthy());node.handlers.plotly_relayout({'xaxis.range[0]':-2.1,'xaxis.range[1]':-1.9});expect(mock.relayout).toHaveBeenCalled();
 });
+
+it('omits hidden point annotations while keeping the same axis range and markers',async()=>{
+ const props={data:[{type:'scatter',x:[.01],y:[80]}],xTitle:'Cost',log:true};
+ const point={key:'one',x:.01,y:80,text:'80% · $0.01<br>12sec'};
+ const {rerender}=render(<Plot {...props} pointLabels={[point]}/>);await waitFor(()=>expect(mock.react).toHaveBeenCalled());
+ const visible=mock.react.mock.calls.at(-1)![2] as any;expect(visible.annotations).toHaveLength(1);
+ rerender(<Plot {...props} pointLabels={[{...point,text:''}]}/>);await waitFor(()=>expect((mock.react.mock.calls.at(-1)![2] as any).annotations).toHaveLength(0));
+ const hidden=mock.react.mock.calls.at(-1)![2] as any;expect(hidden.xaxis.range).toEqual(visible.xaxis.range);expect(mock.react.mock.calls.at(-1)![1]).toEqual(props.data);
+});

@@ -138,3 +138,9 @@ The first Pages attempt for this change exposed a clean-checkout test dependency
 ## Point-label seconds (2026-11-05)
 
 Changed only the point-label latency display from milliseconds to rounded whole seconds, formatted without decimals or a space (for example, `47sec`). The reading note, documentation and existing label/layout expectations use seconds. Source latency values, averages, chart axes, hover precision and benchmark outputs are unchanged.
+
+## Point-label visibility controls (2026-11-05)
+
+Added checked-by-default controls for all point labels and for correctness, cost and latency individually on the cost and response-time charts. Turning the master switch off hides the outside annotations while retaining individual choices and the existing marker/rank and axis coordinates. Turning it back on restores those choices; clearing all three fields also hides annotations. The selections persist when switching between the two scatter charts.
+
+Passed 61 DOM/Plotly tests and 30 data/watcher/layout tests, including individual field choices, master toggle, restoring choices, scatter-chart switching, empty annotations and unchanged markers/axis range. The repository-path production build passed with 11 methods, 550 evaluations and zero data warnings. Browser inventory reported that the browser access host is unavailable, so no browser visual or touch-device review is claimed. Benchmark data and paid APIs were untouched.

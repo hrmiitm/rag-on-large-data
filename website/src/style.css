@@ -936,3 +936,6 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .chart-technique details { margin-top:12px; }
 .chart-technique details small { color:var(--muted); }
 .chart-pareto-reason { font-size:13px; line-height:1.6; padding:10px 12px; border-left:3px solid var(--accent); background:var(--surface); }
+.point-label-controls { border:0; padding:0; margin:14px 0 8px; }
+.point-label-controls legend { font-size:13px; color:var(--muted); font-weight:600; padding:0; }
+.point-label-controls label:has(input:disabled) { opacity:.55; }

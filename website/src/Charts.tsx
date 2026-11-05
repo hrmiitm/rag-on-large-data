@@ -30,14 +30,18 @@ export function paretoFrontiers(groups:Group[],metric:string,x:'cost'|'medianLat
    return nondominated.sort((a,b)=>a[x]!-b[x]!||a.key.localeCompare(b.key));
  }).filter(points=>points.length>0);
 }
-export function pointLabelText(group:Group) {
+type LabelFields={correctness:boolean;cost:boolean;latency:boolean};
+const allLabelFields:LabelFields={correctness:true,cost:true,latency:true};
+export function pointLabelText(group:Group,fields:LabelFields=allLabelFields) {
  const quality=group.scores.answer_correctness===null?'—':percent(group.scores.answer_correctness);
  const cost=group.cost===null?'N/A':`$${group.cost.toFixed(2)}`;
  const latency=group.latency===null?'N/A':`${Math.round(group.latency)}sec`;
- return `${quality} · ${cost}<br>${latency}`;
+ const first=[fields.correctness?quality:null,fields.cost?cost:null].filter(v=>v!==null).join(' · ');
+ return [first,fields.latency?latency:''].filter(Boolean).join('<br>');
 }
 export default function Charts({rows,categories,methods,dark,hover,setHover,setFilters,openEvaluations}:{rows:Evaluation[];categories:string[];methods:string[];dark:boolean;hover:Hover;setHover:(v:Hover)=>void;setFilters:(updater:(f:Filters)=>Filters)=>void;openEvaluations:(g:Group)=>void}){
  const groups=useMemo(()=>groupRows(rows),[rows]),[log,setLog]=useState(true),[frontier,setFrontier]=useState(true),[selectedKey,setSelectedKey]=useState<string|null>(null),[zoom,setZoom]=useState(0),[fit,setFit]=useState(true),[metric,setMetric]=useState('answer_correctness'),[usage,setUsage]=useState('api_cost_usd'),[sortGap,setSortGap]=useState(false),[view,setView]=useState('cost');
+ const [showPointLabels,setShowPointLabels]=useState(true),[labelFields,setLabelFields]=useState<LabelFields>(allLabelFields);
  const accuracy=useMemo(()=>accuracyOrder(methods,groups),[methods,groups]);
  const rank=(method:string)=>accuracy.ranks.get(method)??'—';
  const selected=groups.find(g=>g.key===selectedKey)??null;
@@ -59,7 +63,7 @@ export default function Charts({rows,categories,methods,dark,hover,setHover,setF
  const detail=selected&&methodDescription(selected.rows,rows);
  const axis=view==='latency'?'medianLatency':'cost';
  const dominatedBy=selected?paretoDominators(groups,selected,metric,axis):[];
- const pointLabels=(x:'cost'|'medianLatency')=>groups.filter(g=>g[x]!==null&&g.scores[metric]!==null&&(x!=='cost'||!log||g.cost!>0)).map(g=>({key:g.key,x:g[x]!,y:g.scores[metric]!*100,text:pointLabelText(g)}));
+ const pointLabels=(x:'cost'|'medianLatency')=>groups.filter(g=>g[x]!==null&&g.scores[metric]!==null&&(x!=='cost'||!log||g.cost!>0)).map(g=>({key:g.key,x:g[x]!,y:g.scores[metric]!*100,text:showPointLabels?pointLabelText(g,labelFields):''}));
  const selectionPanel=<div className="chart-selection" role="region" aria-label="Selected chart series" onKeyDown={e=>{if(e.key==='Escape')setSelectedKey(null);}}>
    {selected&&detail?<>
      <div className="chart-selection-heading"><h3><span className="chart-method-number" style={{background:chartColor(selected.method)}}>{rank(selected.method)}</span>{methodLabel(selected.method)}</h3><button onClick={()=>setSelectedKey(null)}>Clear selection</button></div>
@@ -86,6 +90,7 @@ export default function Charts({rows,categories,methods,dark,hover,setHover,setF
      <p className="chart-rank-note">{accuracy.comparable?<>Accuracy rank: <b>1 = highest answer correctness</b> for the current filters. Ties share a rank; unscored methods show —. Numbers stay based on correctness when you switch charts or quality measures. </>:<>Accuracy ranking is unavailable across multiple model/settings groups or configurations for one method. Use the shared filters to select a single comparison; series stay separate.</>}</p>
      <MethodLegend methods={accuracy.methods} ranks={accuracy.ranks} scores={accuracy.scores} ranked={accuracy.comparable} selected={selected?.method??null} onSelect={selectMethod} chartColor={chartColor}/>
      {(view==='cost'||view==='latency')&&<div className="chart-controls chart-scatter-controls"><label>Quality measure <select aria-label="Chart quality metric" value={metric} onChange={e=>setMetric(e.target.value)}>{Object.entries(labels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{view==='cost'&&<label>Cost scale <select aria-label="Cost axis" value={log?'log':'linear'} onChange={e=>setLog(e.target.value==='log')}><option value="linear">Linear</option><option value="log">Logarithmic</option></select></label>}<label>Quality range <select aria-label="Quality axis range" value={fit?'fit':'full'} onChange={e=>setFit(e.target.value==='fit')}><option value="fit">Fit to data</option><option value="full">Full · 0–100%</option></select></label><label className="check"><input type="checkbox" checked={frontier} onChange={e=>setFrontier(e.target.checked)}/> Show Pareto frontier</label><button onClick={()=>setZoom(z=>z+1)}>Reset zoom</button></div>}
+     {(view==='cost'||view==='latency')&&<fieldset className="chart-controls point-label-controls"><legend>Point labels</legend><label className="check"><input type="checkbox" checked={showPointLabels} onChange={e=>setShowPointLabels(e.target.checked)}/> Show labels</label>{([['correctness','Correctness'],['cost','Cost'],['latency','Latency']] as const).map(([key,name])=><label className="check" key={key}><input type="checkbox" checked={labelFields[key]} disabled={!showPointLabels} onChange={e=>setLabelFields(current=>({...current,[key]:e.target.checked}))}/>{name}</label>)}</fieldset>}
      {(view==='cost'||view==='latency')&&<p className="chart-reading-note">Point labels: <b>correctness % · average cost · average answer-ready seconds</b>. Costs round to two decimals here; hover or open Exact values for precision.{view==='latency'&&<> The time axis uses median latency; labels show the mean.</>}{view==='cost'&&log&&<> Log scale shows positive costs; use Linear to plot zero cost.</>}{frontier&&<> Dotted lines directly connect non-dominated measured points in each matched comparison. Correctness rank alone does not determine frontier membership.</>}</p> }
      {view==='cost'&&<>
        <Plot key={view} data={series('cost')} pointLabels={pointLabels('cost')} revision={`cost-${log}-${metric}-${fit}-${zoom}-${coordinates}`} yRange={qualityRange} yTitle={`Mean ${labels[metric].toLowerCase()} (%)`} dark={dark} log={log} height={500} xTitle="Average serving API cost per answer (USD)" xFormat="$,.3f" empty={hasQuality?undefined:'No completed judgments for this selection.'} onClick={chartClick} onHover={p=>{const g=groups.find(g=>g.key===p.customdata);if(g)setHover({method:g.method});}} onLeave={()=>setHover(null)}/>

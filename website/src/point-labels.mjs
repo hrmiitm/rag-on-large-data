@@ -7,7 +7,7 @@ export function labelXRange(points,log=false) {
 }
 const overlap=(a,b,gap=3)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left)+gap)*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)+gap);
 export function placePointLabels(points,{width,height,xRange,yRange,log=false}) {
- const visible=points.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&(!log||p.x>0)).map(p=>{
+ const visible=points.filter(p=>p.text&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&(!log||p.x>0)).map(p=>{
   const x=log?Math.log10(p.x):p.x;
   return {...p,axisX:x,px:(x-xRange[0])/(xRange[1]-xRange[0])*width,py:(yRange[1]-p.y)/(yRange[1]-yRange[0])*height};
  }).filter(p=>p.px>=0&&p.px<=width&&p.py>=0&&p.py<=height);
