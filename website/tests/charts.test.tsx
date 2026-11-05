@@ -202,11 +202,11 @@ it('explains Elasticsearch simply and computes comparison text from matched filt
  const filtered=methodDescription([elastic],[{...baseline,reasoning:'LOW'}]);expect(filtered.observations).toHaveLength(0);
 });
 
-it('labels points with correctness, two-decimal cost and mean milliseconds outside the ranked markers',async()=>{
+it('labels points with correctness, two-decimal cost and rounded mean seconds outside the ranked markers',async()=>{
  const row={...rows[0],cost:.0381595575,latency:47.0984846,scores:{...seed.scores,answer_correctness:.9018,faithfulness:.7}};
  mount([row]);let label=JSON.parse(screen.getByTestId('chart-series').getAttribute('data-labels')!)[0];
- expect(label.text).toBe('90.2% · $0.04<br>47,098 ms');expect(traces()[0].textposition).toBe('middle center');expect(pointLabelText(groupRows([{...row,cost:null,latency:null}])[0])).toBe('90.2% · N/A<br>N/A');
- await userEvent.selectOptions(screen.getByLabelText('Chart quality metric'),'faithfulness');label=JSON.parse(screen.getByTestId('chart-series').getAttribute('data-labels')!)[0];expect(label.y).toBe(70);expect(label.text).toBe('90.2% · $0.04<br>47,098 ms');
+ expect(label.text).toBe('90.2% · $0.04<br>47sec');expect(traces()[0].textposition).toBe('middle center');expect(pointLabelText(groupRows([{...row,cost:null,latency:null}])[0])).toBe('90.2% · N/A<br>N/A');
+ await userEvent.selectOptions(screen.getByLabelText('Chart quality metric'),'faithfulness');label=JSON.parse(screen.getByTestId('chart-series').getAttribute('data-labels')!)[0];expect(label.y).toBe(70);expect(label.text).toBe('90.2% · $0.04<br>47sec');
 });
 
 it('explains a dominated runner-up instead of incorrectly connecting it to the frontier',async()=>{

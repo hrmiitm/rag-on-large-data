@@ -4,7 +4,7 @@ import {labelXRange,placePointLabels} from '../src/point-labels.mjs';import {gro
 // npm test runs before data generation in a fresh CI checkout.
 const folder=new URL('../../judge/final-results/',import.meta.url);
 const rows=fs.readdirSync(folder).filter(f=>f.endsWith('.jsonl')).sort().flatMap(f=>fs.readFileSync(new URL(f,folder),'utf8').split('\n').filter(Boolean).flatMap(line=>normalize(JSON.parse(line),f)));
-const points=groupRows(rows).filter(g=>g.cost!==null&&g.cost>0&&g.scores.answer_correctness!==null).map(g=>({key:g.key,x:g.cost,y:g.scores.answer_correctness*100,text:`${(g.scores.answer_correctness*100).toFixed(1)}% · $${g.cost.toFixed(2)}<br>${Math.round(g.latency*1000).toLocaleString('en-US')} ms`}));
+const points=groupRows(rows).filter(g=>g.cost!==null&&g.cost>0&&g.scores.answer_correctness!==null).map(g=>({key:g.key,x:g.cost,y:g.scores.answer_correctness*100,text:`${(g.scores.answer_correctness*100).toFixed(1)}% · $${g.cost.toFixed(2)}<br>${Math.round(g.latency)}sec`}));
 const overlap=(a,b)=>Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top);
 test('live clustered labels stay within the plot without covering labels or circles at multiple widths',()=>{
  for(const log of [true,false])for(const width of [280,420,800,1050]){
@@ -18,7 +18,7 @@ test('live clustered labels stay within the plot without covering labels or circ
  }
 });
 test('log annotations retain the correct anchor and ignore invalid/zero costs',()=>{
- const input=[{key:'valid',x:.01,y:80,text:'80.0% · $0.01<br>12,345 ms'},{key:'zero',x:0,y:80,text:'zero'},{key:'missing',x:null,y:80,text:'missing'}];
+ const input=[{key:'valid',x:.01,y:80,text:'80.0% · $0.01<br>12sec'},{key:'zero',x:0,y:80,text:'zero'},{key:'missing',x:null,y:80,text:'missing'}];
  const xRange=labelXRange(input,true);const [p]=placePointLabels(input,{width:500,height:400,xRange,yRange:[0,105],log:true});
  assert.equal(p.annotation.x,-2);assert.equal(p.annotation.y,80);assert.equal(p.annotation.axref,'pixel');assert.equal(p.annotation.showarrow,true);assert.equal(p.annotation.text,input[0].text);
  assert.equal(labelXRange([],true),undefined);

@@ -9,8 +9,8 @@ it('Plotly adapter forwards hover, unhover and click data without committing fil
 it('formats currency axes and honors fitted quality ranges and explicit reset revisions',async()=>{render(<Plot data={[{type:'scatter',x:[.01],y:[80]}]} xTitle="Cost" xFormat="$,.3f" yRange={[40,90]} revision="cost-fit-1"/>);await waitFor(()=>expect(mock.react).toHaveBeenCalled());const layout=mock.react.mock.calls.at(-1)![2] as any;expect(layout.xaxis.tickformat).toBe('$,.3f');expect(layout.yaxis.range).toEqual([40,90]);expect(layout.uirevision).toBe('cost-fit-1');});
 
 it('draws small external value annotations on log axes and repositions them after zoom',async()=>{
- render(<Plot data={[{type:'scatter',x:[.01],y:[80]}]} xTitle="Cost" log pointLabels={[{key:'one',x:.01,y:80,text:'80.0% · $0.01<br>12,345 ms'}]}/>);
+ render(<Plot data={[{type:'scatter',x:[.01],y:[80]}]} xTitle="Cost" log pointLabels={[{key:'one',x:.01,y:80,text:'80.0% · $0.01<br>12sec'}]}/>);
  await waitFor(()=>expect(mock.react).toHaveBeenCalled());const layout=mock.react.mock.calls.at(-1)![2] as any;
- expect(layout.annotations).toHaveLength(1);expect(layout.annotations[0]).toEqual(expect.objectContaining({x:-2,y:80,text:'80.0% · $0.01<br>12,345 ms',font:expect.objectContaining({size:10.5}),standoff:17}));
+ expect(layout.annotations).toHaveLength(1);expect(layout.annotations[0]).toEqual(expect.objectContaining({x:-2,y:80,text:'80.0% · $0.01<br>12sec',font:expect.objectContaining({size:10.5}),standoff:17}));
  const node=screen.getByRole('img') as any;await waitFor(()=>expect(node.handlers.plotly_relayout).toBeTruthy());node.handlers.plotly_relayout({'xaxis.range[0]':-2.1,'xaxis.range[1]':-1.9});expect(mock.relayout).toHaveBeenCalled();
 });
