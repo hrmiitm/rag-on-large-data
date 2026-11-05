@@ -1,0 +1,8 @@
+db/
+*.log
+q-a*.jsonl
+.venv/
+__pycache__/
+*.audit.jsonl
+*.state.json
+*.lock

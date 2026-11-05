@@ -50,6 +50,16 @@ This project evaluates RAG techniques on SEC filings. Use the prepared financial
 | `website/tests/` | Isolated data/watcher, DOM interaction and Plotly adapter checks; fixtures never become benchmark results. |
 | `website/VALIDATION.md` | Recorded verification and explicit browser/visual-review limitations. |
 | `.github/workflows/benchmark-pages.yml` | Tests, rebuilds discovered result files and deploys static assets through GitHub Pages. |
+| `elasticsearch/README.md` | Independent local Elasticsearch ingestion, resource limits, zero-new-embedding policy and commands. |
+| `elasticsearch/compose.yaml` | Official digest-pinned Elasticsearch Docker service, localhost port 19200, 4 GiB memory cap. |
+| `elasticsearch/src/setup.py` | Resumable streaming ingestion of existing SEC chunks and paid embeddings; no model API calls. |
+| `elasticsearch/src/validate.py` | Original-source, embedding-receipt, indexed-text/metadata and vector/search validation. |
+| `elasticsearch/src/status.py` | Read-only ingestion progress, measured ETA, container RAM and index size. |
+| `elasticsearch/src/eval.py` | Independent bounded Elasticsearch tool agent, 5..10 question workers, Foundry/OpenRouter only and resumable common-schema audits. |
+| `elasticsearch/src/budget.py` | Durable $15 campaign / $7 generation admission guard; no new embeddings. |
+| `elasticsearch/src/judge.py` | Reuses shared judge for the top-level Elasticsearch folder, five concurrent workers and the same $15 ledger. |
+| `elasticsearch/EVALUATION.md` | Agent tools/settings, commands, offline verification and actual live gateway blocker/resume status. |
+| `elasticsearch/RESULTS.md` | Completed 50-answer/50-judgment live run: measured latency, costs, rubric scores and verification. |
 
 ## GitHub Pages results discovery
 

@@ -1,0 +1,40 @@
+{
+  "passed_operational_sanity": true,
+  "source_hash_matches_final_validation": true,
+  "tools": {
+    "search_filings": 180,
+    "read_passages": 32
+  },
+  "search_modes": {
+    "hybrid": 93,
+    "keyword": 87
+  },
+  "tool_statuses": {
+    "ok": 212
+  },
+  "company_filtered_searches": 179,
+  "questions_at_six_turn_limit": 27,
+  "mean_tool_retrieval_ms": 18.819903386806885,
+  "mean_total_retrieval_seconds_per_question": 0.0797963903600612,
+  "median_answer_ready_seconds": 44.824774929499654,
+  "gold_evidence_filing_present_items": 100,
+  "gold_evidence_items": 102,
+  "full_gold_span_coverage_items": 72,
+  "gold_coverage_note": "Offline exact source-offset union in context; this is not ANN recall, required-fact recall or a binary answer score.",
+  "important_failure": {
+    "question_id": "q028",
+    "cause": "Agent used three searches plus two neighbour reads, then entered forced final turn without searching Netflix."
+  },
+  "comparison_note": "All 50 question IDs/cutoffs, corpus/question hashes, answer model/reasoning/output limit and judge settings match Lume agentic; tools, execution concurrency and run conditions differ.",
+  "website": {
+    "url": "http://127.0.0.1:5173/",
+    "methods": 11,
+    "evaluations": 550,
+    "elasticsearch_valid_rows": 50,
+    "warnings": 0,
+    "http_status": 200,
+    "browser_visual_review": false
+  },
+  "new_api_calls": 0,
+  "new_api_cost_usd": 0
+}

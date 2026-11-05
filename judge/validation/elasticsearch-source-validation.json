@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "questions": 50,
+  "chunks": 662,
+  "generation_calls": 259,
+  "metadata_calls": 259,
+  "unknown_citation_markers": 0,
+  "reported_serving_cost_usd": 1.9079778749999994,
+  "source_sha256": "f429145551794d5edfa8f91ea73042ab5b50ede226d51e6aed982e46292751b7",
+  "source_preserved": true,
+  "new_embedding_api_calls": 0
+}

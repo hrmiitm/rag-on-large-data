@@ -21,6 +21,20 @@ This reads `lume/bm25/q-a.jsonl` and writes **`judge/final-results/q-a-eval-lume
 
 Credentials come from repository `.env` / environment, using `LLMFOUNDRY_BASE_URL`, `LLMFOUNDRY_API_KEY`, and `LLM_PROVIDER=llmfoundry`. Environment variables override `.env`, which overrides `.env.example`. Authentication headers are never logged; the configured key is redacted from saved API data.
 
+For the top-level Elasticsearch experiment, use `PYTHONDONTWRITEBYTECODE=1 lume/agentic-search/src/.venv/bin/python elasticsearch/src/judge.py --concurrency 5`.
+This adapter reuses this shared evaluator without changing its `lume/` CLI path
+restriction, shares the experiment's $15 campaign ledger, and writes
+`final-results/q-a-eval-elasticsearch.jsonl`. Its first invocation found zero
+eligible source answers and exported 50 skipped/null judgments with zero API
+calls; this is not a completed scored benchmark. See
+[`elasticsearch/EVALUATION.md`](../elasticsearch/EVALUATION.md).
+
+The subsequent full Elasticsearch run completed all 50 answers and all 50
+Sonnet judgments: $1.907977875 generation plus $2.555618 judging, $4.463595875
+total. All compact schemas, gold evidence, source preservation and zero-call
+resume checks passed. See [`elasticsearch/RESULTS.md`](../elasticsearch/RESULTS.md)
+and `validation/elasticsearch-final-validation.json`.
+
 ## GitHub Pages discovery
 
 GitHub Pages must discover every `.jsonl` file in `judge/final-results/` at build time, rather than hard-coding filenames or a method list. Derive the displayed method name from everything after `eval-`, excluding `.jsonl`: `q-a-eval-lume-bm25.jsonl` becomes `lume-bm25`, and `q-a-eval-lume-agentic-search.jsonl` becomes `lume-agentic-search`. Preserve the complete suffix, including hyphens. An automatically generated manifest is suitable for browser loading; a manually maintained registry is not. Audit logs, state and locks stay outside this discovery directory.

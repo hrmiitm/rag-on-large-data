@@ -1,0 +1,68 @@
+{
+  "status": "completed",
+  "reported_at_ist": "2026-11-05T11:55:56.020721+05:30",
+  "questions": 50,
+  "successful_answers": 50,
+  "judged_answers": 50,
+  "answer_status": {
+    "ok": 50
+  },
+  "judge_status": {
+    "completed": 50
+  },
+  "average_answer_ready_seconds": {
+    "mean": 47.09848459710003,
+    "n": 50
+  },
+  "average_serving_api_cost_usd": {
+    "mean": 0.0381595575,
+    "n": 50
+  },
+  "quality": {
+    "answer_correctness": {
+      "mean": 0.9018,
+      "n": 50
+    },
+    "faithfulness": {
+      "mean": 0.9067999999999999,
+      "n": 50
+    },
+    "context_relevance": {
+      "mean": 0.906,
+      "n": 50
+    },
+    "answer_relevance": {
+      "mean": 0.9258,
+      "n": 50
+    }
+  },
+  "fully_correct_answers": 18,
+  "evaluation_reported_cost_usd": 1.907977875,
+  "judge_reported_cost_usd": 2.555618,
+  "total_reported_cost_usd": 4.463595875,
+  "total_accounted_or_reserved_usd": 4.463595875,
+  "unknown_cost_attempts": 0,
+  "budget_limit_usd": 15,
+  "budget_halted": null,
+  "successful_generation_http_peak_concurrency": 5,
+  "metadata_status": {
+    "available": 50
+  },
+  "new_embedding_api_calls": 0,
+  "source_sha256": "f429145551794d5edfa8f91ea73042ab5b50ede226d51e6aed982e46292751b7",
+  "metric_notes": [
+    "Correctness is mean model-judge rubric score, not a human-verified accuracy rate.",
+    "Answer-ready time is active question execution; excludes pre-worker queue, metadata enrichment and judging.",
+    "Serving API cost excludes judge overhead. Reasoning tokens are already included in output."
+  ],
+  "generation_http_calls": 259,
+  "generation_http_200": 259,
+  "metadata_http_calls": 259,
+  "metadata_http_200": 259,
+  "judge_http_calls": 50,
+  "judge_http_200": 50,
+  "generation_wall_seconds": 655.326145,
+  "metadata_wall_seconds": 602.870706,
+  "judge_wall_seconds": 69.917728,
+  "campaign_wall_seconds": 1335.261351
+}

@@ -36,3 +36,18 @@ test('optional local evidence is matched to exact snapshot identifiers, never su
 test('development watcher regenerates on file changes, additions and deletions',async t=>{const {createServer}=await import('vite');const {benchmarkDataPlugin}=await import('../scripts/watch-data.mjs');const w=await workspace(t);await write(w.folder,'q-a-eval-a.jsonl',[sample]);const site=path.join(w.root,'website');await fs.writeFile(path.join(site,'index.html'),'<h1>Isolated watcher integration test</h1>');const server=await createServer({configFile:false,root:site,plugins:[benchmarkDataPlugin(w)],server:{host:'127.0.0.1',port:0,watch:{usePolling:true,interval:30}},logLevel:'silent'});t.after(()=>server.close());await server.listen();const manifest=async()=>JSON.parse(await fs.readFile(path.join(w.out,'manifest.json'),'utf8'));const first=await manifest();
  async function changed(action,predicate){await action();const started=Date.now();while(Date.now()-started<7000){await new Promise(r=>setTimeout(r,70));const m=await manifest();if(predicate(m))return m;}throw Error('Watcher did not regenerate the expected manifest within 7 seconds.');}
  const updated=await changed(()=>write(w.folder,'q-a-eval-a.jsonl',[judged(sample)]),m=>m.version!==first.version);const added=await changed(()=>write(w.folder,'q-a-eval-watcher-future.jsonl',[sample]),m=>m.methods.includes('watcher-future'));assert.equal(added.records,2);const deleted=await changed(()=>fs.unlink(path.join(w.folder,'q-a-eval-watcher-future.jsonl')),m=>!m.methods.includes('watcher-future'));assert.equal(deleted.records,1);assert.notEqual(updated.version,added.version);});
+test('Elasticsearch and arbitrary future methods need no registry and keep exported retrieval facts',async t=>{
+ const w=await workspace(t),r=judged(sample);r.method='unregistered-adapter';r.provenance.retriever='fixture_keyword_vector_fusion';
+ for(const a of Object.values(r.answers))a.retrieval={...clone(r.retrieval),queries:[{mode:'hybrid'},{mode:'keyword'},{mode:'hybrid'}],chunks:[{scores:{bm25:3,fixture_vector:.8}}]};
+ await write(w.folder,'q-a-eval-elasticsearch.jsonl',[r]);await write(w.folder,'q-a-eval-future-search-with-hyphens.jsonl',[r]);
+ const m=await buildData(w),asset=JSON.parse(await fs.readFile(path.join(w.out,m.data)));
+ assert.deepEqual(m.methods,['elasticsearch','future-search-with-hyphens']);assert.equal(m.warnings.length,0);
+ for(const row of asset.rows){assert.equal(row.sourceMethod,'unregistered-adapter');assert.deepEqual(row.retrievalProfile,{retriever:'fixture_keyword_vector_fusion',modes:['hybrid','keyword'],signals:['bm25','fixture_vector']});}
+});
+test('public result exports and validation presentation samples omit private account diagnostics',async()=>{
+ const samples=(await fs.readdir(path.join(root,'judge/validation'))).filter(f=>/^presentation-.*\.jsonl$/.test(f));
+ const datasets=[...sourceFiles.map(f=>path.join(root,'judge/final-results',f)),...samples.map(f=>path.join(root,'judge/validation',f))];
+ const privateKeys=new Set(['workspace_id','external_user','session_id','http_referer','user_agent','organization_id','user_id','authorization','api_key','access_token','refresh_token']);
+ const walk=(value,file)=>{if(Array.isArray(value))value.forEach(v=>walk(v,file));else if(value&&typeof value==='object')for(const [k,v]of Object.entries(value)){assert.ok(!privateKeys.has(k.toLowerCase())||v===null||v==='',`${path.basename(file)} includes private field ${k}`);walk(v,file);}};
+ for(const file of datasets)for(const line of (await fs.readFile(file,'utf8')).split('\n').filter(Boolean))walk(JSON.parse(line),file);
+});

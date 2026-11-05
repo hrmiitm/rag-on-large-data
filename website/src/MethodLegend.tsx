@@ -1,9 +1,10 @@
 import type {Evaluation,Group} from './types';
-import {percent} from './format';
+import {money,percent,seconds} from './format';
+import {groupRows,matchedComparison,mean,numeric} from './data.mjs';
 
 // Descriptions follow recorded adapter identities, never guesses from filenames.
 // Discovery remains data-driven; unfamiliar adapters get an explicit fallback.
-export function methodDescription(rows:Evaluation[]):{search:string;sent:string;steps?:string[]} {
+export function methodDescription(rows:Evaluation[],comparisonRows:Evaluation[]=[]):{search:string;sent:string;steps?:string[];comparison?:string;performance?:string;observations?:string[]} {
   const sources=[...new Set(rows.map(row=>row.sourceMethod))];
   const profiles:Record<string,{search:string;steps:string[];sent:string}>={
     bm25:{search:'Finds filing passages that contain the question’s important words. BM25 is a keyword relevance score.',steps:['Search SEC passages for matching words, names and financial terms.','Rank passages by how strongly those words match the question.','Use the highest-ranked passages to write the answer.'],sent:'The question and top retrieved SEC passages with numbered citation markers.'},
@@ -19,11 +20,48 @@ export function methodDescription(rows:Evaluation[]):{search:string;sent:string;
   };
   if(!rows.length)return {search:'No evaluations for the current filters.',sent:'No supplied context in this selection.'};
   if(sources.length!==1)return {search:'Multiple recorded retrieval techniques in this selection.',sent:'Context stays separate for each model and configuration.'};
-  return Object.hasOwn(profiles,sources[0])?profiles[sources[0]]:{search:'Retrieval technique is not documented for this recorded adapter.',sent:'Recorded answer context; inspect a question for details.'};
+  if(sources[0]==='elasticsearch-agentic') {
+    const observations:string[]=[];
+    // Compare individual common questions, keeping settings/configurations separate.
+    const selected=groupRows(rows);
+    if(selected.length===1)for(const other of groupRows(comparisonRows).filter((g:Group)=>g.method!==selected[0].method&&['bm25','agentic'].includes(g.rows[0].sourceMethod))) {
+      const matched=matchedComparison([selected[0],other]);
+      if(!matched.n)continue;
+      const [a,b]=matched.groups as Group[];
+      observations.push(`${matched.n} matched questions vs. ${methodLabel(b.method)} (${b.configuration.slice(0,8)}): correctness ${percent(a.scores.answer_correctness)} vs. ${percent(b.scores.answer_correctness)}; average answer time ${seconds(a.latency)} vs. ${seconds(b.latency)}; serving cost ${money(a.cost)} vs. ${money(b.cost)} per answer.`);
+    }
+    const retrieval=mean(rows.map(r=>numeric(r.metrics.retrieval_time_ms))),latency=mean(rows.map(r=>r.latency));
+    return {
+      search:'An LLM researches SEC filings using Elasticsearch: keyword search plus meaning-based search over the existing passage embeddings.',
+      steps:[
+        'The LLM chooses a search query, keyword or hybrid mode, and company/form filters. Every search respects the question’s filing-date cutoff.',
+        'BM25 finds matching words; approximate vector search finds similar meaning. Hybrid merges the two top-50 lists with reciprocal rank fusion (RRF), then returns five passages. It reuses the original question’s saved vector; rewritten queries change only keyword search.',
+        'The LLM can refine searches and read neighbouring passages to complete a table or explanation, then calculate and cite its answer within six model turns.',
+      ],
+      sent:'The question and passages returned by its search/read tools, with numbered citations. Gold answers are excluded; no new embeddings are created.',
+      comparison:'It shares BM25 with keyword methods and rank fusion with RRF. Unlike one-shot RRF, the LLM can search again and read neighbours. Lume agentic uses keyword search; this agent adds filtered hybrid search. Elasticsearch uses approximate vector lookup, while the Lume semantic baseline scans vectors exactly. There is no cross-encoder reranker.',
+      performance:`The persistent index avoids reloading Lume’s 33 shards for each search; company filters narrow the work. Recorded retrieval averages ${seconds(retrieval===null?null:retrieval/1000)} per question, versus ${seconds(latency)} to prepare an answer (available timings only). Most waiting is in LLM calls. Serving spend pays for all model turns and evidence tokens; judging is separate and excluded from chart cost. Filters, repeated searches and neighbour reads can help find better evidence, but these runs compare whole pipelines and do not isolate the engine’s effect.`,
+      observations,
+    };
+  }
+  if(Object.hasOwn(profiles,sources[0]))return profiles[sources[0]];
+  const retrievers=[...new Set(rows.flatMap(r=>r.retrievalProfile?.retriever?[r.retrievalProfile.retriever]:[]))];
+  const modes=[...new Set(rows.flatMap(r=>r.retrievalProfile?.modes??[]))];
+  const signals=[...new Set(rows.flatMap(r=>r.retrievalProfile?.signals??[]))];
+  return {search:retrievers.length||modes.length||signals.length?[
+    retrievers.length?`Recorded retriever: ${retrievers.join(', ')}.`:'',
+    modes.length?`Recorded search modes: ${modes.join(', ')}.`:'',
+    signals.length?`Recorded ranking signals: ${signals.join(', ')}.`:'',
+  ].filter(Boolean).join(' '):'Retrieval technique is not documented for this recorded adapter.',sent:'Recorded answer context; inspect a question for its supplied evidence and citations.'};
 }
 
 export const methodLabel=(method:string)=>method.replace(/^lume-/, '').replaceAll('-', ' ');
 export const chartPalette=['#2563eb','#c2410c','#087f5b','#9333ea','#b45309','#0891b2','#be185d','#4f46e5','#4d7c0f','#a16207'];
+// Extend the palette for any number of discovered methods without wrapping at ten.
+export function methodColor(method:string,methods:string[]) {
+ const index=Math.max(0,methods.indexOf(method));
+ return chartPalette[index]??`hsl(${((index-chartPalette.length)*137.508+205)%360}, 65%, 36%)`;
+}
 // Rank only unambiguous method series; never average across model/settings or
 // different retrieval configurations to manufacture a method-level accuracy.
 export function accuracyOrder(methods:string[],groups:Group[]) {

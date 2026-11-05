@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "source_records": 50,
+  "completed_judgments": 50,
+  "compact_schema_valid": true,
+  "gold_evidence_preserved": true,
+  "answers_and_metrics_preserved": true,
+  "source_unchanged_by_judge_and_resume": true,
+  "completed_resume_new_paid_calls": 0,
+  "budget_attempts_and_amounts_unchanged_on_resume": true,
+  "source_sha256": "f429145551794d5edfa8f91ea73042ab5b50ede226d51e6aed982e46292751b7",
+  "export_sha256": "55d494295a4507cb08e86f1160cda85173e4ce03f5ebe0b3308bb9f510bd3658"
+}

@@ -924,3 +924,8 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height
 .chart-technique h4 { margin:6px 0; font-size:15px; }
 .chart-technique ol { margin:10px 0 14px; padding-left:24px; }
 .chart-technique li { margin:8px 0; padding-left:3px; }
+
+.chart-frontiers { margin:12px 0; font-size:13px; line-height:1.7; }
+.chart-frontiers p { margin:6px 0; }
+.chart-frontiers small { color:var(--muted); }
+.frontier-method { border:0; border-radius:0; padding:0; background:transparent; color:var(--accent); text-decoration:underline; text-underline-offset:3px; font:inherit; }

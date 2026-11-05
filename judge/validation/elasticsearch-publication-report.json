@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "date": "2026-11-05",
+  "scope": "Tracked/candidate publication files and local benchmark/judge logs; no paid calls.",
+  "credential_scan": {
+    "candidate_and_tracked_files": 218,
+    "local_log_audit_files": 60,
+    "local_json_records_parsed": 7944,
+    "configured_credentials_checked": 1,
+    "credential_matches": 0,
+    "unredacted_credential_fields": 0,
+    "checks": [
+      "exact configured credential",
+      "provider/GitHub key formats",
+      "private-key markers",
+      "bearer credentials",
+      "credential-bearing URLs",
+      "structured credential fields"
+    ]
+  },
+  "privacy_cleanup": {
+    "file": "judge/validation/presentation-lume-bm25.jsonl",
+    "removed_diagnostics": [
+      "app_id",
+      "external_user",
+      "user_agent",
+      "http_referer",
+      "session_id",
+      "preset_id",
+      "workspace_id"
+    ],
+    "all_other_record_fields_preserved": true
+  },
+  "git_exclusions_verified": [
+    ".env",
+    "elasticsearch/db/",
+    "elasticsearch/q-a.jsonl",
+    "elasticsearch/q-a.backup.jsonl",
+    "elasticsearch/raw-eval.log",
+    "website/public/data/",
+    "website/dist/",
+    "website/node_modules/"
+  ],
+  "source_sha256": "f429145551794d5edfa8f91ea73042ab5b50ede226d51e6aed982e46292751b7",
+  "export_sha256": "55d494295a4507cb08e86f1160cda85173e4ce03f5ebe0b3308bb9f510bd3658",
+  "checks": {
+    "ui_plotly_tests": 55,
+    "data_watcher_tests": 27,
+    "elasticsearch_offline_tests": 15,
+    "judge_offline_tests": 31,
+    "production_build": true,
+    "methods": 11,
+    "evaluations": 550,
+    "data_warnings": 0,
+    "browser_visual_review": false
+  },
+  "limitations": [
+    "Automated scanning does not prove absence of every possible unknown secret format.",
+    "Historical commits were not rewritten."
+  ]
+}

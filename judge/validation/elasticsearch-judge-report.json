@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "source": "elasticsearch/q-a.jsonl",
+  "source_sha256": "f429145551794d5edfa8f91ea73042ab5b50ede226d51e6aed982e46292751b7",
+  "source_preserved": true,
+  "output": "judge/final-results/q-a-eval-elasticsearch.jsonl",
+  "questions": 50,
+  "eligible_answers": 50,
+  "judge_status_counts": {
+    "completed": 50
+  },
+  "judge_model": "anthropic/claude-sonnet-5.5",
+  "reasoning_effort": "low",
+  "temperature": 0,
+  "mode": "concurrent",
+  "concurrency": 5,
+  "judge_budget_accounted_usd": 2.555618,
+  "new_judge_generation_calls": 50,
+  "total_budget_limit_usd": 15,
+  "not_a_completed_scored_benchmark": false,
+  "judge_http_200": 50
+}
